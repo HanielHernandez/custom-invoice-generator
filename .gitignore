@@ -25,4 +25,7 @@ coverage
 *.sln
 *.sw?
 
+.env
+.env.*
+
 *.tsbuildinfo
