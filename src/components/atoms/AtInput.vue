@@ -3,7 +3,6 @@ defineOptions({
   inheritAttrs: false
 })
 
-
 const model = defineModel()
 
 </script>

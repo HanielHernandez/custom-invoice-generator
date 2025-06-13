@@ -1,23 +1,21 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import { requiresAuthGuard } from './requires-auth-guard'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes: [
     {
       path: '/',
       name: 'home',
-      redirect: '/auth',
-      component: HomeView
+      redirect: '/dashboard'
     },
     {
       path: '/auth',
       name: 'auth',
-      redirect: { name: 'signin' },
       component: () => import('../views/auth/IndexView.vue'),
       children: [
         {
-          path: '/signin',
+          path: 'signin',
           name: 'signin',
           component: () => import('../views/auth/SingInView.vue')
         }
@@ -25,14 +23,16 @@ const router = createRouter({
     },
 
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue')
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('../views/dashboard/DashboardView.vue'),
+      meta: {
+        requiresAuth: true
+      }
     }
   ]
 })
+
+router.beforeEach(requiresAuthGuard)
 
 export default router
