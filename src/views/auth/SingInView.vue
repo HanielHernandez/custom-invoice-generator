@@ -16,13 +16,17 @@ import { CardContent, CardDescription } from '@/components/ui/card';
 import { auth } from '@/lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'vue-router';
-
+import { ref } from "vue"
+import { Delete, EyeClosedIcon, EyeIcon, X } from 'lucide-vue-next';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 const router = useRouter()
-
+const isPasswordVisible = ref(false)
 const validationSchema = toTypedSchema(z.object({
   email: z.string().email(),
   password: z.string()
 }))
+
+const error = ref<string | null>(null)
 
 
 const { handleSubmit, isSubmitting } = useForm({
@@ -36,52 +40,67 @@ const onSubmit = handleSubmit(async ({ email, password }) => {
     router.push("/dashboard")
 
   } catch (e) {
-    console.error(e)
+    console.error("")
+    error.value = e as string;
   }
 })
 </script>
 <template>
-  <Card class="w-full max-w-120">
+  <div class="flex flex-col gap-4 md:gap-6 w-full justify-center items-center">
+    <Alert class="relative" v-if="error" variant="destructive">
+      <AlertTitle>Error while login</AlertTitle>
+      <AlertDescription>
+        {{ error }}
+      </AlertDescription>
+      <Button variant="ghost" color="" class="absolute top-0 left-0 h-6 w-6 rounded-full">
+        <X></X>
+      </Button>
+    </Alert>
+    <Card class="w-full md:max-w-120">
+      <CardHeader class="text-center">
+        <CardTitle>Welcome back</CardTitle>
+        <CardDescription>Enter your credentials to access your account</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form @submit.prevent="onSubmit" class="flex flex-col gap-4">
+          <FormField v-slot="{ componentField }" name="email">
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="name@example.com" v-bind="componentField" />
+              </FormControl>
 
-    <CardHeader class="text-center">
-      <CardTitle>Welcome back</CardTitle>
-      <CardDescription>Enter your credentials to access your account</CardDescription>
-    </CardHeader>
-    <CardContent>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+          <FormField v-slot="{ componentField }" name="password">
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <div class="flex relative items-center">
+                  <Input :type="isPasswordVisible ? 'text' : 'password'" class="pr-10" placeholder="Your password"
+                    v-bind="componentField" />
+                  <Button @click="isPasswordVisible = !isPasswordVisible" type="button"
+                    class="absolute z-4 right-0 top-0" variant="ghost" title="show/hide password">
+                    <EyeClosedIcon class="w-4 h-4" v-if="isPasswordVisible" />
+                    <EyeIcon class="w-4 h-4" v-else />
+                  </Button>
+                </div>
 
-      <form @submit.prevent="onSubmit" class="flex flex-col gap-4">
-        <FormField v-slot="{ componentField }" name="email">
-          <FormItem>
-            <FormLabel>Email</FormLabel>
-            <FormControl>
-              <Input type="email" placeholder="name@example.com" v-bind="componentField" />
-            </FormControl>
+              </FormControl>
 
-            <FormMessage />
-          </FormItem>
-        </FormField>
-        <FormField v-slot="{ componentField }" name="password">
-          <FormItem>
-            <FormLabel>Password</FormLabel>
-            <FormControl>
-              <Input type="password" placeholder="Your password" v-bind="componentField" />
-            </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
 
-            <FormMessage />
-          </FormItem>
-        </FormField>
+          <Button type="submit" size="lg">
+            Sign In <span class="animate-spin border-4 border-neutral-300 border-t-white w-6 h-6 rounded-full "
+              v-if="isSubmitting"> </span>
+          </Button>
 
-        <Button type="submit" size="lg">
-          Sign In <span class="animate-spin border-4 border-neutral-300 border-t-white w-6 h-6 rounded-full "
-            v-if="isSubmitting"> </span>
-        </Button>
-
-      </form>
-    </CardContent>
-
-
-
-  </Card>
-
+        </form>
+      </CardContent>
+    </Card>
+  </div>
 </template>
 <style lang="scss"></style>
