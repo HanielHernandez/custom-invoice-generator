@@ -11,8 +11,8 @@ const { items = [], loading = false } = defineProps<{
 
 </script>
 <template>
-    <Card>
-        <CardHeader class="pb-2">
+    <Card class="gap-2">
+        <CardHeader>
             <CardTitle>
                 User List
             </CardTitle>

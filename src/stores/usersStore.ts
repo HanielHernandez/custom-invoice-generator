@@ -40,5 +40,9 @@ export const useUserStore = defineStore('users', () => {
         fetch()
     }
 
-    return { loading, error, items, fetch, reset }
+    function setLastItem(payload: QueryDocumentSnapshot | undefined) {
+        lastItem.value = payload
+    }
+
+    return { loading, error, items, fetch, reset, setLastItem }
 })

@@ -7,7 +7,7 @@ import DialogTitle from '@/components/ui/dialog/DialogTitle.vue';
 import UserForm from '@/components/UserForm.vue';
 import { useUserStore } from '@/stores/usersStore';
 import { PlusIcon } from 'lucide-vue-next';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeMount, onMounted, ref } from 'vue';
 import UsersTable from './UsersTable.vue';
 
 const dialogOpen = ref(false)
@@ -27,6 +27,9 @@ const onFormSave = () => {
 }
 
 
+onBeforeMount(() => {
+    usersStore.setLastItem(undefined)
+})
 
 
 </script>
@@ -38,11 +41,7 @@ const onFormSave = () => {
                 <PlusIcon class="h-4 w-4" /> New User
             </Button>
         </div>
-
-        <!-- {{ JSON.stringify(usersStore.items, null, 4) }} -->
         <UsersTable :items="items" :loading="loading" />
-
-
         <Dialog :open="dialogOpen" @update:open="(o) => dialogOpen = o">
             <DialogContent class="max-w-3xl">
                 <DialogHeader>
@@ -56,7 +55,6 @@ const onFormSave = () => {
                 <UserForm @on-cancel="dialogOpen = false" @on-save="onFormSave()" />
             </DialogContent>
         </Dialog>
-
     </section>
 </template>
 <style lang="scss"></style>

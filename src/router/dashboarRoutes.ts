@@ -5,9 +5,9 @@ export const dashboardRoutes = [
         component: () => import('../views/dashboard/UsersView.vue')
     },
     {
-        path: 'company',
-        name: 'company',
-        component: () => import('../views/dashboard/CompanyView.vue')
+        path: '',
+        name: 'invoices',
+        component: () => import('../views/dashboard/InvoicesView.vue')
     },
     {
         path: 'company',

@@ -1,7 +1,8 @@
 export type Company = {
     name: string
+    id?: string
     phoneNumber: string
-    zicode: string
+    zipcode: string
     address: string
     logoUrl: string
     signature: string

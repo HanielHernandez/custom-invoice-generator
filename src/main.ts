@@ -7,6 +7,7 @@ import router from './router'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './lib/firebase'
 import { useAuthStore } from './stores/authStore'
+
 import App from './App.vue'
 
 let app: VueApp | null = null
