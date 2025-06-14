@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import AtText from '@/components/atoms/AtText.vue';
 import InvoiceForm from '@/components/InvoiceForm.vue';
+import InvoicesTable from '@/components/InvoicesTable.vue';
 import { Button } from '@/components/ui/button';
 import { DialogHeader, Dialog, DialogContent } from '@/components/ui/dialog';
 import DialogDescription from '@/components/ui/dialog/DialogDescription.vue';
 import DialogTitle from '@/components/ui/dialog/DialogTitle.vue';
+
 import { auth } from '@/lib/firebase';
 import { useCompanyStore } from '@/stores/companyStore';
 import { userInvoiceStore } from '@/stores/InvoiceStore';
@@ -31,7 +33,8 @@ const onFormSave = async (values: Invoice) => {
         await invoicesStore.create({
             ...values,
             company: company.value,
-            uid: uid.value || ""
+            uid: uid.value || "",
+            createdAt: Date.now()
         })
 
         dialogOpen.value = false
@@ -62,6 +65,11 @@ const uid = computed(() => {
                     <PlusIcon class="h-4 w-4" /> New Invoice
                 </Button>
             </div>
+
+
+            <InvoicesTable />
+
+
             <Dialog :open="dialogOpen" @update:open="(o) => dialogOpen = o">
                 <DialogContent class="w-full md:max-w-3xl md:max-h-200 overflow-auto">
                     <DialogHeader>

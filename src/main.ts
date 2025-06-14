@@ -7,7 +7,7 @@ import router from './router'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './lib/firebase'
 import { useAuthStore } from './stores/authStore'
-
+import InstantSearch from 'vue-instantsearch/vue3/es'
 import App from './App.vue'
 
 let app: VueApp | null = null
@@ -17,8 +17,8 @@ onAuthStateChanged(auth, (user) => {
         app = createApp(App)
 
         app.use(createPinia())
+        app.use(InstantSearch)
         app.use(router)
-
         app.mount('#app')
     }
 

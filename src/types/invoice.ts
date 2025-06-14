@@ -16,5 +16,5 @@ export interface Invoice {
     materials: boolean
     uid: string
     company: Company
-    createdAt?: string
+    createdAt?: number
 }
