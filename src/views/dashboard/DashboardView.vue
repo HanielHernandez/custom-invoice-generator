@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import DashboardLayout from '@/components/DashboardLayout.vue';
 
+
 </script>
 <template>
-  <DashboardLayout class="dashboard view">
+    <DashboardLayout class="dashboard view">
 
-    dasboard view
-  </DashboardLayout>
+        <RouterView />
+    </DashboardLayout>
 </template>
 <style lang="scss"></style>
