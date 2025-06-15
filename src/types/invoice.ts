@@ -17,4 +17,5 @@ export interface Invoice {
     uid: string
     company: Company
     createdAt?: number
+    deletedAt?: number | null
 }

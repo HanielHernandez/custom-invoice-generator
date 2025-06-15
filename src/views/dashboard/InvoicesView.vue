@@ -34,7 +34,8 @@ const onFormSave = async (values: Invoice) => {
             ...values,
             company: company.value,
             uid: uid.value || "",
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            deletedAt: null
         })
 
         dialogOpen.value = false
