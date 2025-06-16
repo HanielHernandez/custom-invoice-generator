@@ -8,7 +8,10 @@ const router = createRouter({
         {
             path: '/',
             name: 'home',
-            redirect: '/dashboard'
+            redirect: '/dashboard',
+            meta: {
+                requiresAuth: true
+            }
         },
         {
             path: '/auth',

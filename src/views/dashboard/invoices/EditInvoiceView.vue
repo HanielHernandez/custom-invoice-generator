@@ -5,7 +5,7 @@ import Card from '@/components/ui/card/Card.vue';
 import CardHeader from '@/components/ui/card/CardHeader.vue';
 import CardTitle from '@/components/ui/card/CardTitle.vue';
 import { Skeleton } from '@/components/ui/skeleton';
-import { userInvoiceStore } from '@/stores/InvoiceStore';
+import { useInvoiceStore } from '@/stores/InvoiceStore';
 import type { Invoice } from '@/types/invoice';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
@@ -13,7 +13,7 @@ import { useRoute } from 'vue-router';
 import { toast } from 'vue-sonner';
 
 const route = useRoute()
-const invoices = userInvoiceStore()
+const invoices = useInvoiceStore()
 const { invoice, loading, fetching } = storeToRefs(invoices)
 
 onMounted(() => {

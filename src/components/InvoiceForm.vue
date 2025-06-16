@@ -33,7 +33,7 @@ const invoiceSchema = z.object({
     state: z.string().min(1, 'State is required'),
     zip: z.string().min(1, 'ZIP is required'),
     phone: z.string().min(1, 'Phone is required'),
-    total: z.string().min(1, 'Total is required'),
+    total: z.number().min(1, 'Total is required'),
     description: z.string(),
     services: z.array(z.string()),
     materials: z.boolean().optional(),
@@ -139,7 +139,7 @@ const onSubmit = handleSubmit((data) => {
             <FormItem>
                 <FormLabel>Total</FormLabel>
                 <FormControl>
-                    <Input v-bind="componentField" placeholder="Enter total amount" />
+                    <Input type="number" v-bind="componentField" placeholder="Enter total amount" />
                 </FormControl>
                 <FormMessage />
             </FormItem>

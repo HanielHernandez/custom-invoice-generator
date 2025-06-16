@@ -19,6 +19,7 @@ import { Upload } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { computed, onMounted, ref } from 'vue';
+import { toast } from 'vue-sonner';
 import { z } from 'zod';
 
 const CompanySchema = z.object({
@@ -30,6 +31,7 @@ const CompanySchema = z.object({
     signature: z.string().min(1, 'Signature is required'),
     terms: z.string().min(1, 'Terms are required'),
     tags: z.array(z.string()).default([]),
+    email: z.string()
 });
 
 const { handleSubmit, setValues } = useForm({
@@ -38,6 +40,7 @@ const { handleSubmit, setValues } = useForm({
         name: '',
         phoneNumber: '',
         zipcode: '',
+        email: '',
         address: '',
         logoUrl: '',
         signature: '',
@@ -103,10 +106,21 @@ const onSubmit = handleSubmit(async (values) => {
         // Save to Firestore
         await action
 
-        alert('✅ Company saved!');
+        toast.success('✅ Company saved!', {
+            position: "top-center",
+            description: "Your company data has been saved succeflly",
+            closeButton: true
+        }
+        );
     } catch (error) {
         console.error('❌ Error saving company:', error);
-        alert('Failed to save company');
+
+        toast.error('❌ Error saving company:', {
+            position: "top-center",
+            description: "Error: " + error,
+            closeButton: true
+        })
+        //alert('Failed to save company');
     } finally {
         loading.value = false;
     }
@@ -181,17 +195,29 @@ const onSubmit = handleSubmit(async (values) => {
                             </FormItem>
                         </FormField>
                     </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField v-slot="{ componentField }" name="zipcode">
+                            <FormItem>
+                                <FormLabel>Zip Code</FormLabel>
+                                <FormControl>
+                                    <Input v-bind="componentField" placeholder="Enter Company Email" />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        </FormField>
+                        <FormField v-slot="{ componentField }" name="email">
+                            <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                    <Input type="email" v-bind="componentField" placeholder="Enter zip code" />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        </FormField>
+                    </div>
 
 
-                    <FormField v-slot="{ componentField }" name="zipcode">
-                        <FormItem>
-                            <FormLabel>Zip Code</FormLabel>
-                            <FormControl>
-                                <Input v-bind="componentField" placeholder="Enter zip code" />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    </FormField>
+
 
                     <FormField v-slot="{ componentField }" name="address">
                         <FormItem>

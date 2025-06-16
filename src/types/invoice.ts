@@ -11,7 +11,7 @@ export interface Invoice {
     state: string
     zip: string
     phone: string
-    total: string
+    total: number
     description: string
     services: string[]
     materials: boolean
@@ -19,5 +19,6 @@ export interface Invoice {
     objectID: string
     company: Company
     createdAt?: number
+    deleted?: boolean
     deletedAt?: number | null
 }

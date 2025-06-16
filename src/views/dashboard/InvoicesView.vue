@@ -9,11 +9,11 @@ import DialogTitle from '@/components/ui/dialog/DialogTitle.vue';
 import { auth } from '@/lib/firebase';
 import { generateInvoiceCode } from '@/lib/utils';
 import { useCompanyStore } from '@/stores/companyStore';
-import { userInvoiceStore } from '@/stores/InvoiceStore';
+import { useInvoiceStore } from '@/stores/InvoiceStore';
 import type { Invoice } from '@/types/invoice';
 import { PlusIcon } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import * as instantsearch from 'vue-instantsearch/vue3/es';
 import { useRoute, useRouter } from 'vue-router';
 import { toast, Toaster } from 'vue-sonner';
@@ -24,8 +24,20 @@ const companyStore = useCompanyStore()
 const { company } = storeToRefs(companyStore)
 const router = useRouter()
 const route = useRoute()
-const invoicesStore = userInvoiceStore()
+const invoicesStore = useInvoiceStore()
 const dialogOpen = ref(false)
+const { error } = storeToRefs(invoicesStore)
+
+
+watch(error, (newError) => {
+    if (newError.title) {
+        toast.error(newError.title, {
+            description: newError.description,
+            closeButton: true,
+            onDismiss: invoicesStore.resetError
+        })
+    }
+})
 
 const onFormSave = async (values: Invoice) => {
 
@@ -42,6 +54,7 @@ const onFormSave = async (values: Invoice) => {
             company: company.value,
             uid: uid.value || "",
             createdAt: Date.now(),
+            deleted: false,
             deletedAt: null
         })
 
@@ -75,12 +88,16 @@ const uid = computed(() => {
 })
 
 
+const isNotPrintview = computed(() => {
+    return !route.fullPath.includes('print')
+})
+
 </script>
 <template>
     <Toaster class="pointer-events-auto" />
     <div>
         <section class="flex flex-col gap-4">
-            <div class="flex justify-between">
+            <div class="flex justify-between" v-if="isNotPrintview">
                 <at-text variant="h2"> Invoices </at-text>
                 <Button @click="dialogOpen = true">
                     <PlusIcon class="h-4 w-4" /> New Invoice
@@ -91,7 +108,6 @@ const uid = computed(() => {
             <RouterView />
 
             <Dialog :open="dialogOpen" @update:open="(o) => dialogOpen = o">
-
                 <DialogContent class="w-full md:max-w-3xl  overflow-auto">
                     <DialogHeader>
                         <DialogTitle>
@@ -101,8 +117,6 @@ const uid = computed(() => {
                             Fill the folowing form to create a new user
                         </DialogDescription>
                     </DialogHeader>
-
-
                     <InvoiceForm v-if="companyStore.company" :loading="invoicesStore.loading"
                         :company="companyStore.company" @on-cancel="dialogOpen = false" @on-save="onFormSave" />
                 </DialogContent>

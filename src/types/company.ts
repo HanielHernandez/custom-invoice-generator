@@ -6,6 +6,7 @@ export type Company = {
     address: string
     logoUrl: string
     signature: string
+    email?: string
     terms: string
     tags: string[]
 }

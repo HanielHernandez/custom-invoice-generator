@@ -12,28 +12,47 @@ import {
 } from '@/components/ui/sidebar'
 import { HomeIcon, ScrollTextIcon, StoreIcon, UserIcon } from 'lucide-vue-next';
 import SidebarMenu from './ui/sidebar/SidebarMenu.vue';
-import { useRoute } from 'vue-router';
+import { useRole, type Role } from '@/composable/useRole';
+import { computed } from 'vue';
 
-const menuItems = [
-    {
-        name: "Home",
-        icon: HomeIcon,
-        url: "/dashboard/"
-    },
-    {
-        name: "Users",
-        icon: UserIcon,
-        url: "/dashboard/users"
-    },
+type MenuItem = {
+    name: string,
+    url: string,
+    icon: unknown,
+    role: Role
+}
 
-    {
-        name: "Company",
-        icon: StoreIcon,
-        url: "/dashboard/company"
-    }
-]
+const menuItems: MenuItem[] =
 
-const route = useRoute()
+    [
+        {
+            name: "Home",
+            icon: HomeIcon,
+            url: "/dashboard/",
+            role: "any",
+        },
+        {
+            name: "Users",
+            icon: UserIcon,
+            url: "/dashboard/users",
+            role: "admin",
+        },
+
+        {
+            name: "Company",
+            icon: StoreIcon,
+            url: "/dashboard/company",
+            role: "any",
+        }
+    ]
+
+const { role } = useRole()
+
+
+const availableItems = computed(() => {
+    if (role == null) return []
+    return menuItems.filter(x => x.role == 'any' ? true : x.role == role.value)
+})
 
 </script>
 
@@ -47,8 +66,8 @@ const route = useRoute()
             <SidebarGroup>
                 <SidebarGroupLabel> Application </SidebarGroupLabel>
                 <SidebarGroupContent>
-                    <SidebarMenu>
-                        <SidebarMenuItem v-for="item in menuItems" :key="item.name">
+                    <SidebarMenu v-if="role !== null">
+                        <SidebarMenuItem v-for="item in availableItems" :key="item.name">
                             <SidebarMenuButton asChild>
                                 <router-link :to="item.url">
                                     <component :is="item.icon" />

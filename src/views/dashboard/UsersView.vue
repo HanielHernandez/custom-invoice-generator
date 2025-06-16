@@ -9,6 +9,7 @@ import { useUserStore } from '@/stores/usersStore';
 import { PlusIcon } from 'lucide-vue-next';
 import { computed, onBeforeMount, onMounted, ref } from 'vue';
 import UsersTable from './UsersTable.vue';
+import { auth } from '@/lib/firebase';
 
 const dialogOpen = ref(false)
 const usersStore = useUserStore()
@@ -16,6 +17,11 @@ const usersStore = useUserStore()
 onMounted(async () => {
 
     usersStore.fetch()
+
+    const tokenRessult = await auth.currentUser?.getIdTokenResult()
+
+    console.log(tokenRessult)
+
 })
 
 const items = computed(() => usersStore.items)
