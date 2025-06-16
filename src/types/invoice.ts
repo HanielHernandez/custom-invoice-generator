@@ -2,6 +2,7 @@ import type { Company } from './company'
 
 export interface Invoice {
     id?: string
+    code?: string
     name: string
     stimates: string
     customerName: string
@@ -15,6 +16,7 @@ export interface Invoice {
     services: string[]
     materials: boolean
     uid: string
+    objectID: string
     company: Company
     createdAt?: number
     deletedAt?: number | null

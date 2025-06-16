@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { UserProfile } from 'firebase/auth';
 import { Card, CardTitle, CardHeader, CardDescription, CardContent } from '@/components/ui/card'
 import { Table, TableHeader, TableBody, TableCell, TableRow, TableHead } from '@/components/ui/table'
+import type { UserProfile } from '@/lib/firebase-auth';
 
 const { items = [], loading = false } = defineProps<{
     items: UserProfile[],

@@ -21,7 +21,6 @@ export function useAuth() {
 
     return {
         currentUser,
-        isAuthenticated: computed(() => currentUser.value !== null),
-        isEmailVerified: computed(() => currentUser.value?.emailVerified ?? false)
+        isAuthenticated: computed(() => currentUser.value !== null)
     }
 }

@@ -16,14 +16,13 @@ export type User = {
     photoUrl?: string
 }
 
-export type UserProfile =
-    | User
-    | {
-          createdAt: string
-          veifiedAt: string
-          role: string
-          uid: string
-      }
+export type UserProfile = User & {
+    createdAt: string
+    veifiedAt: string
+    name: string
+    role: string
+    uid: string
+}
 
 const FUNCTIONS_URL = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL
 const FUNCTIONS_SECRET = import.meta.env.VITE_FIREBASE_FUNCTIONS_SECRET

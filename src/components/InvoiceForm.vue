@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm, useFieldArray } from 'vee-validate'
+import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { toTypedSchema } from '@vee-validate/zod'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
@@ -9,13 +9,14 @@ import Button from './ui/button/Button.vue'
 import Checkbox from './ui/checkbox/Checkbox.vue'
 
 import type { Company } from '@/types/company'
-import type { Invoice } from '@/types/Invoice'
+import type { Invoice } from '@/types/invoice'
 import LoadingSpinner from './ui/LoadingSpinner.vue'
 
 
-const { company, loading = false } = defineProps<{
+const { company, loading = false, invoice } = defineProps<{
     company: Company,
-    loading: boolean
+    loading: boolean,
+    invoice?: Invoice
 }>()
 
 const emit = defineEmits<{
@@ -35,32 +36,22 @@ const invoiceSchema = z.object({
     total: z.string().min(1, 'Total is required'),
     description: z.string(),
     services: z.array(z.string()),
-    materials: z.boolean(),
+    materials: z.boolean().optional(),
 })
 
-const { handleSubmit, handleReset, errors } = useForm({
+const { handleSubmit, handleReset } = useForm({
     validationSchema: toTypedSchema(invoiceSchema),
+    initialValues: invoice ? invoice : { services: [], materials: false }
 })
-
-
-
-
-const { remove, push: pushService } = useFieldArray<string>('services')
 
 const onSubmit = handleSubmit((data) => {
-
     emit("onSave", data as Invoice)
-
 })
 </script>
 
 <template>
-    <form @submit.prevent="onSubmit" class="space-y-4  ">
-        <pre v-if="errors">
-            {{
-                JSON.stringify(errors, null, 4)
-            }}
-        </pre>
+    <form @submit.prevent="onSubmit" class="space-y-4 ">
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField v-slot="{ componentField }" name="name">
                 <FormItem>
@@ -164,7 +155,22 @@ const onSubmit = handleSubmit((data) => {
             </FormItem>
         </FormField>
 
-        <FormField name="services" v-if="company">
+
+        <FormField v-for="(service) in company.tags" v-slot="{ value, handleChange }" :key="service" type="checkbox"
+            :value="service" :unchecked-value="false" name="services">
+            <FormItem class="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                    <Checkbox :model-value="value.includes(service)" @update:model-value="handleChange" />
+                </FormControl>
+                <FormLabel class="font-normal">
+                    {{ service }}
+                </FormLabel>
+            </FormItem>
+        </FormField>
+
+
+
+        <!-- <FormField name="services" v-if="company">
             <FormItem>
                 <FormLabel>Services</FormLabel>
                 <FormControl>
@@ -182,7 +188,7 @@ const onSubmit = handleSubmit((data) => {
                 </FormControl>
                 <FormMessage />
             </FormItem>
-        </FormField>
+        </FormField> -->
 
         <FormField v-slot="{ value, handleChange }" name="materials">
             <FormItem>

@@ -1,23 +1,29 @@
 <script setup lang="ts">
 import AtText from '@/components/atoms/AtText.vue';
 import InvoiceForm from '@/components/InvoiceForm.vue';
-import InvoicesTable from '@/components/InvoicesTable.vue';
 import { Button } from '@/components/ui/button';
 import { DialogHeader, Dialog, DialogContent } from '@/components/ui/dialog';
 import DialogDescription from '@/components/ui/dialog/DialogDescription.vue';
 import DialogTitle from '@/components/ui/dialog/DialogTitle.vue';
 
 import { auth } from '@/lib/firebase';
+import { generateInvoiceCode } from '@/lib/utils';
 import { useCompanyStore } from '@/stores/companyStore';
 import { userInvoiceStore } from '@/stores/InvoiceStore';
-import type { Invoice } from '@/types/Invoice';
+import type { Invoice } from '@/types/invoice';
 import { PlusIcon } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref } from 'vue';
+import * as instantsearch from 'vue-instantsearch/vue3/es';
+import { useRoute, useRouter } from 'vue-router';
+import { toast, Toaster } from 'vue-sonner';
+
+console.log(instantsearch)
 
 const companyStore = useCompanyStore()
 const { company } = storeToRefs(companyStore)
-
+const router = useRouter()
+const route = useRoute()
 const invoicesStore = userInvoiceStore()
 const dialogOpen = ref(false)
 
@@ -32,6 +38,7 @@ const onFormSave = async (values: Invoice) => {
     try {
         await invoicesStore.create({
             ...values,
+            code: generateInvoiceCode("INV"),
             company: company.value,
             uid: uid.value || "",
             createdAt: Date.now(),
@@ -39,6 +46,18 @@ const onFormSave = async (values: Invoice) => {
         })
 
         dialogOpen.value = false
+
+        router.replace({
+            path: route.path,
+            query: { ...route.query } // Add timestamp to force re-render
+        })
+
+        toast("Invoice created succesfully", {
+            position: "top-center",
+            description: "your invoice hast been save successfully",
+            closeButton: true,
+        })
+
 
     } catch (e) {
         console.error(e)
@@ -58,6 +77,7 @@ const uid = computed(() => {
 
 </script>
 <template>
+    <Toaster class="pointer-events-auto" />
     <div>
         <section class="flex flex-col gap-4">
             <div class="flex justify-between">
@@ -68,11 +88,11 @@ const uid = computed(() => {
             </div>
 
 
-            <InvoicesTable />
-
+            <RouterView />
 
             <Dialog :open="dialogOpen" @update:open="(o) => dialogOpen = o">
-                <DialogContent class="w-full md:max-w-3xl md:max-h-200 overflow-auto">
+
+                <DialogContent class="w-full md:max-w-3xl  overflow-auto">
                     <DialogHeader>
                         <DialogTitle>
                             New Invoice
@@ -81,6 +101,8 @@ const uid = computed(() => {
                             Fill the folowing form to create a new user
                         </DialogDescription>
                     </DialogHeader>
+
+
                     <InvoiceForm v-if="companyStore.company" :loading="invoicesStore.loading"
                         :company="companyStore.company" @on-cancel="dialogOpen = false" @on-save="onFormSave" />
                 </DialogContent>

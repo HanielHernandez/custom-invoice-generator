@@ -5,16 +5,19 @@ import { Card, CardContent, CardHeader } from './ui/card';
 import CardTitle from './ui/card/CardTitle.vue';
 import CardDescription from './ui/card/CardDescription.vue';
 import Input from './ui/input/Input.vue';
-import { computed, ref } from 'vue';
+import { computed, ref, useTemplateRef } from 'vue';
 import CardFooter from './ui/card/CardFooter.vue';
 import { Button } from './ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, EditIcon, HashIcon, PrinterIcon, Trash } from 'lucide-vue-next';
 import dayjs from 'dayjs'
+import { Skeleton } from './ui/skeleton';
+
 
 const refineInput = (val: string, refine: (val: string) => void) => {
 
     refine(val)
 }
+const sortBy = useTemplateRef('sortBy')
 
 const selectedCustomer = ref('Kimberley Houston')
 
@@ -23,17 +26,59 @@ const filters = computed(() => {
         ? `uid:xuRfOIcXNkQcHP8Q9bMQNxF4W663`
         : ''
 })
-const format = (tiemstamp: number) => dayjs(new Date(tiemstamp)).format("DD/MM/YYYY HH:mm A")
 
+const sortByOptions = [{
+    label: 'default', value: 'invoices'
+},
+{
+    label: 'Created at desc', value: 'invoices_createdAt_desc'
+},
+{
+    label: 'Created at asc', value: 'invoices_createdAt_asc'
+}
+]
+
+
+const format = (tiemstamp: number) => dayjs(new Date(tiemstamp)).format("DD/MM/YYYY HH:mm:ss A")
+
+const changeSort = (value: string) => {
+    console.log(sortBy.value)
+    const sortByEl: HTMLSelectElement | null = document.querySelector('.ais-SortBy-select')
+    if (!sortByEl) {
+        return
+    }
+
+    sortByEl.value = value; // change the value
+    sortByEl.dispatchEvent(new Event('change'));
+
+
+}
 
 </script>
 <template>
 
 
-    <ais-instant-search :search-client="searchClient" index-name="invoices" class="flex flex-col gap-4">
-        <ais-search-box>
+    <ais-instant-search :search-client="searchClient" index-name="invoices" class="flex flex-col">
+
+        <ais-state-results v-slot="{ status, isSearchStalled }">
+            <div v-if="status === 'loading' || isSearchStalled">
+                <div class="flex flex-col gap-4">
+                    <Skeleton class="w-full h-9" />
+                    <Skeleton class="w-full h-58" />
+                </div>
+            </div>
+
+            <div v-else class="hidden">
+
+            </div>
+        </ais-state-results>
+
+
+
+        <ais-search-box class="mb-4">
             <template #default="{ currentRefinement, refine }">
-                <Input :value="currentRefinement" @update:model-value="(val: string) => refineInput(val, refine)"
+                <Input :value="currentRefinement"
+                    @update:model-value="(val: string | number) => refineInput(val as string, refine)"
                     placeholder="Search invoices..." class="bg-white " />
             </template>
         </ais-search-box>
@@ -47,26 +92,25 @@ const format = (tiemstamp: number) => dayjs(new Date(tiemstamp)).format("DD/MM/Y
             </CardHeader>
 
             <CardContent>
+                <ais-sort-by ref="sortBy" :items="sortByOptions" class="hidden" />
+
 
                 <ais-hits>
-
-                    <template #default="{ items }">
+                    <template #default="{ items, }">
                         <Table>
-
                             <TableHeader>
-                                <!--
-                                <ais-sort-by :options="[ {label: 'invoices_created_at'}]">
-                                    <template #default="props">
-                                        {{ props }}
-                                    </template>
-
-            </ais-sort-by> -->
-
                                 <TableRow>
+                                    <TableHead>
+                                        <div class="flex items-center gap-2">
+                                            <HashIcon class="h-4 w-4" /> ID
+                                        </div>
+                                    </TableHead>
                                     <TableHead>Name</TableHead>
                                     <TableHead>Company </TableHead>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Created at </TableHead>
+                                    <TableHead>Customer Name</TableHead>
+                                    <TableHead @click="changeSort('invoices_createdAt_desc')">Created at
+                                    </TableHead>
+                                    <TableHead>Actions </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody v-if="items">
@@ -77,6 +121,9 @@ const format = (tiemstamp: number) => dayjs(new Date(tiemstamp)).format("DD/MM/Y
 
                                 <TableRow v-for="item in items" :key="item.objectId">
                                     <TableCell>
+                                        {{ item.code }}
+                                    </TableCell>
+                                    <TableCell>
                                         {{ item.name }}
                                     </TableCell>
                                     <TableCell>
@@ -85,27 +132,33 @@ const format = (tiemstamp: number) => dayjs(new Date(tiemstamp)).format("DD/MM/Y
                                     <TableCell>
                                         {{ item.customerName }}
                                     </TableCell>
-                                    <TableCell>
 
-                                        {{
-                                            item.createdAt + " " +
-                                            format(item.createdAt) }}
+                                    <TableCell>
+                                        {{ format(item.createdAt) }}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center">
+                                            <router-link :to="`/dashboard/invoices/${item.objectID}/edit`"
+                                                class="px-3 py-2">
+                                                <EditIcon class="h-4 w-4" />
+                                            </router-link>
+
+                                            <router-link :to="`/dashboard/invoices/${item.objectID}/print`"
+                                                class="px-3 py-2">
+                                                <PrinterIcon class="h-4 w-4" />
+                                            </router-link>
+
+
+                                            <Button variant="ghost" title="Remove invoice"
+                                                class="text-red-600 opacity-75 hover:bg-red-200  hover:text-red-600 hover:opacity-100 ">
+                                                <Trash :size="14" />
+                                            </Button>
+                                        </div>
+
                                     </TableCell>
                                 </TableRow>
                             </TableBody>
                         </Table>
-                        <!-- <div class="flex flex-col gap-4">
-                            <div v-for="item in items" :key="items.objectId"
-                                class="flex flex-row border border-neutral-200 rounded-md px-4 py-2 hover:bg-neutral-100">
-
-                                <div class="flex flex-col">
-                                    <h4 class="tracking-tight bold font-medium text-neutral-800 ">{{ item.name }}</h4>
-                                    <span class="text-sm text-neutral-600">{{ item.company.name }}</span>
-                                </div>
-
-                            </div>
-
-                        </div> -->
 
                     </template>
 
@@ -132,7 +185,7 @@ const format = (tiemstamp: number) => dayjs(new Date(tiemstamp)).format("DD/MM/Y
                                 </a>
 
 
-                                <a :href="createURL(currentRefinement + 1)"
+                                <a :href="createURL(currentRefinement + 1)" :disabled="isLastPage"
                                     @click.prevent="refine(currentRefinement + 1)">
 
                                     <Button>
