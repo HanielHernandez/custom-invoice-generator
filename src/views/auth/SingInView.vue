@@ -68,8 +68,8 @@ const onSubmit = handleSubmit(async ({ email, password }) => {
                         <FormLabel>Password</FormLabel>
                         <FormControl>
                             <div class="relative ">
-                                <Input type="password" class="pr-10" placeholder="Your password"
-                                    v-bind="componentField" />
+                                <Input :type="isPasswordVisible ? 'text' : 'password'" class="pr-10"
+                                    placeholder="Your password" v-bind="componentField" />
                                 <Button variant="ghost" @click="isPasswordVisible = !isPasswordVisible" type="button"
                                     class="absolute top-0 right-0">
 
