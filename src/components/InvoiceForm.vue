@@ -50,7 +50,7 @@ const onSubmit = handleSubmit((data) => {
 </script>
 
 <template>
-    <form @submit.prevent="onSubmit" class="space-y-4 ">
+    <form @submit.prevent="onSubmit" class="space-y-4 max-h-[80vh] overflow-y-auto ">
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField v-slot="{ componentField }" name="name">
@@ -207,7 +207,7 @@ const onSubmit = handleSubmit((data) => {
         </FormField>
 
 
-        <div class="flex gap-4 pt-4">
+        <div class="flex gap-4 pt-4 sticky botom-0 left-0">
             <Button type="submit">Submit Invoice
                 <LoadingSpinner class="ml-2" v-if="loading" />
             </Button>
