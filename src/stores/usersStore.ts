@@ -1,5 +1,6 @@
-import { getUsers, type UserProfile } from '@/lib/firebase-auth'
-import { QueryDocumentSnapshot } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import { type UserProfile } from '@/lib/firebase-auth'
+import { collection, getDocs, limit, orderBy, query, startAfter } from 'firebase/firestore'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
@@ -9,23 +10,42 @@ export const useUserStore = defineStore('users', () => {
     const items = ref<UserProfile[]>([])
     const orderby = ref<string>('createdAt')
     const flow = ref<'asc' | 'desc'>('desc')
+    const perPage = ref(10)
 
-    const max = ref<number>(10)
-    const lastItem = ref<QueryDocumentSnapshot | undefined>(undefined)
+    const lastItem = ref<number | null>(null)
+    const before = ref<number | null>(null)
+    const endReach = ref(false)
 
-    const fetch = async () => {
+    const fetch = async (pageLimit = 10) => {
         try {
+            perPage.value = pageLimit
             loading.value = true
+            const usersRef = collection(db, 'profiles')
+            const q = query(
+                usersRef,
+                orderBy(orderby.value, flow.value),
+                ...(lastItem.value ? [startAfter(lastItem.value)] : []),
+                limit(perPage.value)
+            )
 
-            const { items: userItems, lastItem: usersLastItem } = await getUsers({
-                max: max.value,
-                lastItem: lastItem.value,
-                flow: flow.value,
-                orderByProp: orderby.value
-            })
+            const querySnapshot = await getDocs(q)
+            const docs = querySnapshot.docs
 
-            items.value = userItems
-            lastItem.value = usersLastItem
+            before.value = lastItem.value ? lastItem.value : Date.now()
+
+            if (docs.length) {
+                lastItem.value = docs[docs.length - 1].data().createdAt
+            } else {
+                endReach.value = true
+            }
+
+            items.value = [
+                ...items.value,
+                ...docs.map<UserProfile>((doc) => ({
+                    id: doc.id,
+                    ...(doc.data() as UserProfile)
+                }))
+            ]
 
             loading.value = false
         } catch (e) {
@@ -36,13 +56,14 @@ export const useUserStore = defineStore('users', () => {
     }
 
     function reset() {
-        lastItem.value = undefined
+        // lastItem.value = Date.now()
+        //  items.value = []
         fetch()
     }
 
-    function setLastItem(payload: QueryDocumentSnapshot | undefined) {
+    function setLastItem(payload: number | null) {
         lastItem.value = payload
     }
 
-    return { loading, error, items, fetch, reset, setLastItem }
+    return { loading, error, items, fetch, reset, setLastItem, before, lastItem }
 })

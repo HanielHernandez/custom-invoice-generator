@@ -8,5 +8,6 @@ export type Company = {
     signature: string
     email?: string
     terms: string
+    objectID?: string
     tags: string[]
 }

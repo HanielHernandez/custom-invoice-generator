@@ -1,6 +1,6 @@
 import { auth, db } from '@/lib/firebase'
 import type { Company } from '@/types/company'
-import { query, collection, where, getDocs } from 'firebase/firestore'
+import { query, collection, where, getDocs, doc, getDoc } from 'firebase/firestore'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
@@ -36,5 +36,19 @@ export const useCompanyStore = defineStore('company', () => {
         }
     }
 
-    return { fetchCompany, company }
+    const find = async (id: string) => {
+        loading.value = true
+        try {
+            const docSnap = await getDoc(doc(db, 'companies', id))
+            company.value = docSnap.exists()
+                ? ({ ...docSnap.data(), objectID: docSnap.id } as Company)
+                : null
+        } catch (e) {
+            console.error(e)
+        } finally {
+            loading.value = false
+        }
+    }
+
+    return { fetchCompany, company, find }
 })

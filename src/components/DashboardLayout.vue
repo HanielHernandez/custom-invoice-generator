@@ -3,7 +3,7 @@ import { SidebarProvider } from '@/components/ui/sidebar'
 import AppSidebar from './AppSidebar.vue';
 import AppHeader from './AppHeader.vue';
 import { useRoute } from 'vue-router';
-import { computed, watch } from 'vue';
+import { computed } from 'vue';
 
 const route = useRoute()
 

@@ -19,17 +19,19 @@ const catchErrors = async (
     }
 }
 
-export const useInvoiceStore = defineStore('invices', () => {
+export const useInvoiceStore = defineStore('invoices', () => {
     // const invoice = ref<Invoice | null>(null)
     const loading = ref(false)
     const deleting = ref(false)
     const fetching = ref(false)
+
     const error = reactive({
         title: '',
         description: ''
     })
 
     const invoice = ref<Invoice | null>(null)
+
     const create = async (payloadInvoice: Invoice) => {
         loading.value = true
         try {
