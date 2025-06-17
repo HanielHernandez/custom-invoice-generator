@@ -6,23 +6,20 @@ import DialogDescription from '@/components/ui/dialog/DialogDescription.vue';
 import DialogTitle from '@/components/ui/dialog/DialogTitle.vue';
 import UserForm from '@/components/UserForm.vue';
 import { useUserStore } from '@/stores/usersStore';
-import { ChevronLeft, ChevronRight, PlusIcon } from 'lucide-vue-next';
+import { PlusIcon, SearchIcon } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import UsersTable from './UsersTable.vue';
 import { useRoute } from 'vue-router';
+import Input from '@/components/ui/input/Input.vue';
 
-// import { storeToRefs } from 'pinia';
 
 const dialogOpen = ref(false)
 const usersStore = useUserStore()
-// const { lastItem } = storeToRefs(usersStore)
-const page = ref(1)
 const route = useRoute()
+const emailSearch = ref('')
 onMounted(async () => {
     usersStore.reset()
-    // const after = route.query.after ? parseInt(route.query.after as string) : null
     const limit = route.query.limit ? parseInt(route.query.limit as string) : 10
-
     console.log(limit)
     await usersStore.fetch(limit)
 })
@@ -39,6 +36,9 @@ const loadMoreUser = async () => {
     return usersStore.fetch()
 }
 
+const filterByEmail = async () => {
+    await usersStore.filterByEmail(emailSearch.value)
+}
 
 </script>
 <template>
@@ -49,29 +49,23 @@ const loadMoreUser = async () => {
                 <PlusIcon class="h-4 w-4" /> New User
             </Button>
         </div>
-        <UsersTable :items="items" v-if="!loading" :loading="loading" :load-more="loadMoreUser">
 
+        <form @submit.prevent="filterByEmail">
+            <div class="relative">
+                <Input type="search" v-model="emailSearch" class="bg-white pl-12" placeholder="User Email" />
+                <Button type="submit" variant="outline" class="absolute top-0 left-0 rounded-r-none">
+                    <SearchIcon />
+                </Button>
+            </div>
+
+        </form>
+
+        <UsersTable :items="items" :loading="loading" :load-more="loadMoreUser">
             <template #pagination>
-
-                <div class="flex flex-row justify-between items-center w-full">
-
-
-                    <div class="text-sm">
-                        page {{ page }}
-                    </div>
-                    <div class="flex gap-4 items-center">
-                        <a>
-                            <Button>
-                                <ChevronLeft />
-                            </Button>
-                        </a>
-                        <a>
-
-                            <Button>
-                                <ChevronRight />
-                            </Button>
-                        </a>
-                    </div>
+                <div class="flex flex-row justify-center items-center w-full">
+                    <Button variant="secondary" @click="loadMoreUser">
+                        Load More ...
+                    </Button>
                 </div>
             </template>
         </UsersTable>

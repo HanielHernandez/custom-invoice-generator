@@ -1,11 +1,13 @@
 import { db } from '@/lib/firebase'
 import { type UserProfile } from '@/lib/firebase-auth'
-import { collection, getDocs, limit, orderBy, query, startAfter } from 'firebase/firestore'
+import { collection, getDocs, limit, orderBy, query, startAfter, where } from 'firebase/firestore'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useUserStore = defineStore('users', () => {
     const loading = ref(false)
+    const email = ref<string | null>(null)
+
     const error = ref<string | null>(null)
     const items = ref<UserProfile[]>([])
     const orderby = ref<string>('createdAt')
@@ -25,6 +27,7 @@ export const useUserStore = defineStore('users', () => {
                 usersRef,
                 orderBy(orderby.value, flow.value),
                 ...(lastItem.value ? [startAfter(lastItem.value)] : []),
+                ...(email.value !== null ? [where('email', '==', email.value)] : []),
                 limit(perPage.value)
             )
 
@@ -46,6 +49,12 @@ export const useUserStore = defineStore('users', () => {
                     ...(doc.data() as UserProfile)
                 }))
             ]
+            console.log(
+                docs.map<UserProfile>((doc) => ({
+                    id: doc.id,
+                    ...(doc.data() as UserProfile)
+                }))
+            )
 
             loading.value = false
         } catch (e) {
@@ -56,14 +65,21 @@ export const useUserStore = defineStore('users', () => {
     }
 
     function reset() {
-        // lastItem.value = Date.now()
-        //  items.value = []
-        fetch()
+        email.value = null
+        lastItem.value = null
+        items.value = []
     }
 
     function setLastItem(payload: number | null) {
         lastItem.value = payload
     }
 
-    return { loading, error, items, fetch, reset, setLastItem, before, lastItem }
+    async function filterByEmail(emailFilter: string) {
+        reset()
+        email.value = emailFilter == '' ? null : emailFilter
+        console.log(email.value)
+        await fetch()
+    }
+
+    return { loading, error, items, fetch, reset, setLastItem, before, lastItem, filterByEmail }
 })

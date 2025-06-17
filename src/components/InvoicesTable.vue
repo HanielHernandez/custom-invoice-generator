@@ -19,6 +19,7 @@ import SelectItem from './ui/select/SelectItem.vue';
 import { useRole } from '@/composable/useRole';
 import { history as historyRouter } from 'instantsearch.js/es/lib/routers';
 import { singleIndex as singleIndexMapping } from 'instantsearch.js/es/lib/stateMappings';
+import Label from './ui/label/Label.vue';
 
 const routing = {
     router: historyRouter(),
@@ -77,15 +78,15 @@ const sortByOptions = [{
 
 const format = (tiemstamp: number) => dayjs(new Date(tiemstamp)).format("DD/MM/YYYY HH:mm:ss A")
 const changeSort = (value: string) => {
-    console.log(sortBy.value)
-    const sortByEl: HTMLSelectElement | null = document.querySelector('.ais-SortBy-select')
-    if (!sortByEl) {
-        return
-    }
+    console.log(sortBy)
+    // const sortByEl: HTMLSelectElement | null = document.querySelector('.ais-SortBy-select')
+    // if (!sortByEl) {
+    //     return
+    // }
 
-    sortByIndex.value = value
-    sortByEl.value = value;
-    sortByEl.dispatchEvent(new Event('change'));
+    // sortByIndex.value = value
+    // sortByEl.value = value;
+    // sortByEl.dispatchEvent(new Event('change'));
     flow.value = flow.value == "desc" ? 'asc' : 'desc'
 }
 
@@ -143,11 +144,36 @@ const columns = [{
             </template>
         </ais-search-box>
         <Card>
-            <CardHeader>
-                <CardTitle> Invoice List</CardTitle>
-                <CardDescription>
-                    Manage your invoices, view details, and export them.
-                </CardDescription>
+            <CardHeader class="flex justify-between">
+                <div>
+                    <CardTitle> Invoice List</CardTitle>
+                    <CardDescription>
+                        Manage your invoices, view details, and export them.
+                    </CardDescription>
+                </div>
+                <ais-sort-by :items="sortByOptions">
+                    <template #default="{ items, currentRefinement, canRefine, refine }">
+
+                        <div class="flex flex-start gap-2">
+                            <Label>Sort:</Label>
+                            <Select :model-value="currentRefinement" @update:model-value="refine" ref="sortBy"
+                                :disabled="!canRefine">
+                                <SelectTrigger class="w-[180px]">
+                                    <SelectValue placeholder="Sort by ..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem v-for="item in items" :key="item.value" :value="item.value">
+                                        {{ item.label }}
+                                    </SelectItem>
+
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+
+                    </template>
+                </ais-sort-by>
+
             </CardHeader>
             <CardContent>
                 <ais-state-results v-slot="{ status, isSearchStalled, }">
@@ -157,21 +183,7 @@ const columns = [{
                     <div v-else class="hidden">
                     </div>
                 </ais-state-results>
-                <ais-sort-by ref="sortBy" :items="sortByOptions">
-                    <template #default="{ items, currentRefinement, canRefine, refine }">
-                        <Select :model-value="currentRefinement" @update:model-value="refine" :disabled="!canRefine">
-                            <SelectTrigger class="w-[180px]">
-                                <SelectValue placeholder="Sort by ..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem v-for="item in items" :key="item.value" :value="item.value">
-                                    {{ item.label }}
-                                </SelectItem>
 
-                            </SelectContent>
-                        </Select>
-                    </template>
-                </ais-sort-by>
                 <ais-hits>
                     <template #default="{ items, }">
                         <Table>
@@ -181,7 +193,6 @@ const columns = [{
                                         <div class="flex items-center gap-2 cursor-pointer"
                                             @click="changeSort(`invoices_${col.property}_${flow}`)">
                                             {{ col.name }}
-                                            <ArrowDownUp class="h-4 w-4" />
                                         </div>
                                     </TableHead>
 
