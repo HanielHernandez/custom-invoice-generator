@@ -19,6 +19,7 @@ import { useRouter } from 'vue-router';
 import { ref } from 'vue';
 import { AlertCircle, EyeClosed, EyeIcon } from 'lucide-vue-next';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import FormDescription from '@/components/ui/form/FormDescription.vue';
 
 const router = useRouter()
 
@@ -91,8 +92,10 @@ const onSubmit = handleSubmit(async ({ email, password }) => {
                                     </Button>
                                 </div>
                             </FormControl>
-
-                            <FormMessage />
+                            <FormDescription class="text-right">
+                                <router-link to="/auth/forgot-password" class="text-right text-blue-600">Forgot
+                                    password?</router-link>
+                            </FormDescription>
                         </FormItem>
                     </FormField>
 
