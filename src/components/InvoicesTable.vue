@@ -8,7 +8,7 @@ import Input from './ui/input/Input.vue';
 import { computed, ref, useTemplateRef } from 'vue';
 import CardFooter from './ui/card/CardFooter.vue';
 import { Button } from './ui/button';
-import { ArrowDownUp, ChevronLeft, ChevronRight, EditIcon, PrinterIcon, Trash } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, EditIcon, PrinterIcon, Trash } from 'lucide-vue-next';
 import dayjs from 'dayjs'
 import InvoIceDeleteDialog from './InvoIceDeleteDialog.vue';
 import { useInvoiceStore } from '@/stores/InvoiceStore';
@@ -26,7 +26,6 @@ const routing = {
     stateMaping: singleIndexMapping('invoices')
 }
 const sortBy = useTemplateRef('sortBy')
-const sortByIndex = ref('invoices_createdAt_desc')
 const flow = ref("asc")
 const openDeleteModal = ref(false)
 const invoiceId = ref<string | null>(null)
@@ -144,8 +143,8 @@ const columns = [{
             </template>
         </ais-search-box>
         <Card>
-            <CardHeader class="flex justify-between">
-                <div>
+            <CardHeader class="flex flex-col md:flex-row justify-between">
+                <div class="mb-4 md:mb-0">
                     <CardTitle> Invoice List</CardTitle>
                     <CardDescription>
                         Manage your invoices, view details, and export them.
