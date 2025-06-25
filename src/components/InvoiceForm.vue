@@ -50,7 +50,7 @@ const onSubmit = handleSubmit((data) => {
 </script>
 
 <template>
-    <form @submit.prevent="onSubmit" class="space-y-4  ">
+    <form @submit.prevent="onSubmit" class="space-y-4 max-h-[calc(100vh-11rem)] overflow-y-auto">
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField v-slot="{ componentField }" name="name">
