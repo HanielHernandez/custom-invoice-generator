@@ -119,6 +119,10 @@ const isNotPrintview = computed(() => {
                     </DialogHeader>
                     <InvoiceForm v-if="companyStore.company" :loading="invoicesStore.loading"
                         :company="companyStore.company" @on-cancel="dialogOpen = false" @on-save="onFormSave" />
+                    <p v-else>
+                        Please configure your company before creating A new Invoice
+                    </p>
+
                 </DialogContent>
             </Dialog>
         </section>

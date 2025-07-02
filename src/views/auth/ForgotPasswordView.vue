@@ -21,12 +21,11 @@ const message: {
     title: '',
     description: ''
 })
+const siteUrl = import.meta.env.VITE_SITE_URL
 
 const validationSchema = toTypedSchema(z.object({
     email: z.string().email(),
-    password: z.string()
 }))
-
 
 const { handleSubmit, isSubmitting } = useForm({
     validationSchema
@@ -34,9 +33,8 @@ const { handleSubmit, isSubmitting } = useForm({
 
 const onSubmit = handleSubmit(async ({ email }) => {
 
-
     try {
-        await sendPasswordResetEmail(auth, email)
+        await sendPasswordResetEmail(auth, email || "")
         message.type = "default"
         message.title = 'Reset Email sent successfully'
         message.description = 'Check your email for a reset link'
@@ -46,7 +44,6 @@ const onSubmit = handleSubmit(async ({ email }) => {
         message.type = "destructive"
         message.title = 'Error'
         message.description = 'Error while sending reset email'
-
     }
 })
 
@@ -55,7 +52,7 @@ const onSubmit = handleSubmit(async ({ email }) => {
     <div class="flex flex-col gap-4 w-full max-w-120">
         <Alert v-if="message.title !== ''" :variant="message.type">
             <AlertCircle class="w-4 h-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>{{ message.title }}</AlertTitle>
             <AlertDescription>
                 {{ message.description }}
             </AlertDescription>
@@ -78,13 +75,16 @@ const onSubmit = handleSubmit(async ({ email }) => {
                             <FormMessage />
                         </FormItem>
                     </FormField>
-                    <router-link to="/auth/signin" class="text-sm text-center text-blue-600">Go back</router-link>
 
-                    <Button type="submit" size="lg">
+                    <Button type="submit" size="lg" :disabled="isSubmitting">
                         Send Reset Emial <span
                             class="animate-spin border-4 border-neutral-300 border-t-white w-6 h-6 rounded-full "
                             v-if="isSubmitting"> </span>
                     </Button>
+                    <router-link to="/auth/signin" class="block text-center">
+                        <Button variant="ghost" class="block text-center">Go Back</Button>
+                    </router-link>
+
 
                 </form>
             </CardContent>
