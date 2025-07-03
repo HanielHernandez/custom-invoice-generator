@@ -114,11 +114,18 @@ const isNotPrintview = computed(() => {
                             New Invoice
                         </DialogTitle>
                         <DialogDescription>
-                            Fill the folowing form to create a new user
+                            <p v-if="companyStore.company">
+                                Fill the folowing form to create a new user
+                            </p>
+                            <p v-else>
+                                Please configure your company before creating a new Invoice
+                            </p>
                         </DialogDescription>
                     </DialogHeader>
                     <InvoiceForm v-if="companyStore.company" :loading="invoicesStore.loading"
                         :company="companyStore.company" @on-cancel="dialogOpen = false" @on-save="onFormSave" />
+
+
                 </DialogContent>
             </Dialog>
         </section>
