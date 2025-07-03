@@ -93,7 +93,8 @@ const onSubmit = handleSubmit(async ({ email, password }) => {
                                 </div>
                             </FormControl>
                             <FormDescription class="text-right">
-                                <router-link to="/auth/forgot-password" class="text-right text-blue-600">Forgot
+                                <router-link to="/auth/forgot-password"
+                                    class="text-right text-blue-500 hover:blue-600 text-sm font-medium">Forgot
                                     password?</router-link>
                             </FormDescription>
                         </FormItem>

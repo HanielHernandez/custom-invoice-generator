@@ -81,8 +81,9 @@ const onSubmit = handleSubmit(async ({ email }) => {
                             class="animate-spin border-4 border-neutral-300 border-t-white w-6 h-6 rounded-full "
                             v-if="isSubmitting"> </span>
                     </Button>
-                    <router-link to="/auth/signin" class="block text-center">
-                        <Button variant="ghost" class="block text-center">Go Back</Button>
+                    <router-link to="/auth/signin"
+                        class="text-sm text-blue-400 hover:text-blue-600 font-medium text-center">
+                        Return to Sign In
                     </router-link>
 
 
