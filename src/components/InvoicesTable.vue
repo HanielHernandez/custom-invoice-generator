@@ -8,7 +8,7 @@ import Input from './ui/input/Input.vue';
 import { computed, ref, useTemplateRef } from 'vue';
 import CardFooter from './ui/card/CardFooter.vue';
 import { Button } from './ui/button';
-import { ChevronLeft, ChevronRight, EditIcon, PrinterIcon, Trash } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, EditIcon, PrinterIcon, SearchIcon, Trash } from 'lucide-vue-next';
 import dayjs from 'dayjs'
 import InvoIceDeleteDialog from './InvoIceDeleteDialog.vue';
 import { useInvoiceStore } from '@/stores/InvoiceStore';
@@ -26,7 +26,6 @@ const routing = {
     stateMaping: singleIndexMapping('invoices')
 }
 const sortBy = useTemplateRef('sortBy')
-const flow = ref("asc")
 const openDeleteModal = ref(false)
 const invoiceId = ref<string | null>(null)
 const invoiceStore = useInvoiceStore()
@@ -76,18 +75,6 @@ const sortByOptions = [{
 }]
 
 const format = (tiemstamp: number) => dayjs(new Date(tiemstamp)).format("DD/MM/YYYY HH:mm:ss A")
-const changeSort = (value: string) => {
-    console.log(sortBy)
-    // const sortByEl: HTMLSelectElement | null = document.querySelector('.ais-SortBy-select')
-    // if (!sortByEl) {
-    //     return
-    // }
-
-    // sortByIndex.value = value
-    // sortByEl.value = value;
-    // sortByEl.dispatchEvent(new Event('change'));
-    flow.value = flow.value == "desc" ? 'asc' : 'desc'
-}
 
 const onDeleteCancel = () => {
     invoiceId.value = null
@@ -135,44 +122,49 @@ const columns = [{
 </script>
 <template>
     <ais-instant-search :search-client="searchClient" index-name="invoices" class="flex flex-col" :routing="routing">
-        <ais-search-box class="mb-4">
-            <template #default="{ currentRefinement, refine }">
-                <Input :value="currentRefinement"
-                    @update:model-value="(val: string | number) => refineInput(val as string, refine)"
-                    placeholder="Search invoices..." class="bg-white " />
-            </template>
-        </ais-search-box>
+
         <Card>
-            <CardHeader class="flex flex-col md:flex-row justify-between">
-                <div class="mb-4 md:mb-0">
+            <CardHeader class="flex flex-col lg:flex-row  justify-between">
+                <div class="mb-4 lg:mb-0">
                     <CardTitle> Invoice List</CardTitle>
                     <CardDescription>
                         Manage your invoices, view details, and export them.
                     </CardDescription>
                 </div>
-                <ais-sort-by :items="sortByOptions">
-                    <template #default="{ items, currentRefinement, canRefine, refine }">
+                <div class="flex flex-col lg:flex-row gap-4 w-full lg:w-auto">
+                    <ais-search-box>
+                        <template #default="{ currentRefinement, refine }">
+                            <div class="relative w-full">
+                                <Input :value="currentRefinement"
+                                    @update:model-value="(val: string | number) => refineInput(val as string, refine)"
+                                    placeholder="Search invoices..." class="bg-white pl-12 " />
+                                <Button variant="outline" class="absolute top-0 left-0 rounded-r-none border-r-0">
+                                    <SearchIcon />
+                                </Button>
+                            </div>
+                        </template>
+                    </ais-search-box>
+                    <ais-sort-by :items="sortByOptions">
+                        <template #default="{ items, currentRefinement, canRefine, refine }">
 
-                        <div class="flex flex-start gap-2">
-                            <Label>Sort:</Label>
-                            <Select :model-value="currentRefinement" @update:model-value="refine" ref="sortBy"
-                                :disabled="!canRefine">
-                                <SelectTrigger class="w-[180px]">
-                                    <SelectValue placeholder="Sort by ..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem v-for="item in items" :key="item.value" :value="item.value">
-                                        {{ item.label }}
-                                    </SelectItem>
+                            <div class="flex flex-col lg:flex-row flex-start w-full lg:w-auto gap-2">
+                                <Label>Sort:</Label>
+                                <Select :model-value="currentRefinement" @update:model-value="refine" ref="sortBy"
+                                    :disabled="!canRefine">
+                                    <SelectTrigger class="w-full lg:w-[180px]">
+                                        <SelectValue placeholder="Sort by ..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem v-for="item in items" :key="item.value" :value="item.value">
+                                            {{ item.label }}
+                                        </SelectItem>
 
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-
-                    </template>
-                </ais-sort-by>
-
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </template>
+                    </ais-sort-by>
+                </div>
             </CardHeader>
             <CardContent>
                 <ais-state-results v-slot="{ status, isSearchStalled, }">
@@ -189,8 +181,7 @@ const columns = [{
                             <TableHeader>
                                 <TableRow>
                                     <TableHead v-for="col in columns" :key="col.name">
-                                        <div class="flex items-center gap-2 cursor-pointer"
-                                            @click="changeSort(`invoices_${col.property}_${flow}`)">
+                                        <div class="flex items-center gap-2 cursor-pointer">
                                             {{ col.name }}
                                         </div>
                                     </TableHead>

@@ -95,12 +95,12 @@ const isNotPrintview = computed(() => {
 </script>
 <template>
     <Toaster class="pointer-events-auto" />
-    <div>
+    <div class="container container-md mx-auto ">
         <section class="flex flex-col gap-4">
-            <div class="flex justify-between" v-if="isNotPrintview">
+            <div class="flex  justify-between" v-if="isNotPrintview">
                 <at-text variant="h2"> Invoices </at-text>
                 <Button @click="dialogOpen = true">
-                    <PlusIcon class="h-4 w-4" /> New Invoice
+                    <PlusIcon class="h-4 w-4 " /> New Invoice
                 </Button>
             </div>
 

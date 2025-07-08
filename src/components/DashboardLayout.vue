@@ -16,9 +16,9 @@ const isNotPrintview = computed(() => {
 <template>
     <SidebarProvider>
         <AppSidebar v-if="isNotPrintview" />
-        <div class="flex flex-col w-full overflow-auto ">
+        <div class="flex flex-col w-full overflow-auto bg-neutral-100">
             <AppHeader v-if="isNotPrintview" />
-            <main class="p-4 md:px-6  bg-neutral-100 h-full">
+            <main class="p-4 md:px-6 h-full container container-md mx-auto">
                 <slot></slot>
             </main>
         </div>
