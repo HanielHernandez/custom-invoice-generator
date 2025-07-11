@@ -8,7 +8,7 @@ import Input from './ui/input/Input.vue';
 import { computed, ref, useTemplateRef } from 'vue';
 import CardFooter from './ui/card/CardFooter.vue';
 import { Button } from './ui/button';
-import { ChevronLeft, ChevronRight, EditIcon, PrinterIcon, Trash } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, EditIcon, EllipsisVerticalIcon, PrinterIcon, Trash } from 'lucide-vue-next';
 import dayjs from 'dayjs'
 import InvoIceDeleteDialog from './InvoIceDeleteDialog.vue';
 import { useInvoiceStore } from '@/stores/InvoiceStore';
@@ -20,6 +20,8 @@ import { useRole } from '@/composable/useRole';
 import { history as historyRouter } from 'instantsearch.js/es/lib/routers';
 import { singleIndex as singleIndexMapping } from 'instantsearch.js/es/lib/stateMappings';
 import Label from './ui/label/Label.vue';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu';
+import DropdownMenuTrigger from './ui/dropdown-menu/DropdownMenuTrigger.vue';
 
 const routing = {
     router: historyRouter(),
@@ -184,8 +186,51 @@ const columns = [{
                 </ais-state-results>
 
                 <ais-hits>
-                    <template #default="{ items, }">
-                        <Table>
+                    <template #default="{ items }">
+                        <div class="flex flex-col lg:hidden gap-4">
+                            <div class="flex flex-row relative border rounded-sm px-4 py-3 pr-14 gap-4 items-start space-bwete"
+                                v-for="item in items" :key="item.objectId">
+                                <div class="flex flex-col gap-2">
+                                    <span class="text-neutral-800 font-bold text-sm"> {{ format(item.createdAt)
+                                        }}</span>
+                                    <span class="text-neutral-600">{{ item.code }}</span>
+                                    <span class="text-neutral-600 text-sm">
+                                        {{ item.name }} - {{ item.customerName }}
+                                    </span>
+                                </div>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger class="absolute top-4 right-4">
+                                        <EllipsisVerticalIcon />
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                        <DropdownMenuItem>
+                                            <router-link tar :to="`/dashboard/invoices/${item.objectID}/print`"
+                                                target="_blank" rel="noopener noreferrer"
+                                                class=" flex flex-row items-center gap-2 w-full">
+                                                <PrinterIcon class="h-4 w-4" /> Print
+                                            </router-link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem>
+                                            <router-link :to="`/dashboard/invoices/${item.objectID}/edit`"
+                                                class=" flex flex-row items-center gap-2 w-ful">
+                                                <EditIcon class="h-4 w-4 " />
+                                                Edit
+                                            </router-link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem @click="onInvoiceDelete(item.objectID)" class="text-red-600">
+
+                                            <Trash :size="14" color="oklch(57.7% 0.245 27.325)" /> Delete
+
+                                        </DropdownMenuItem>
+
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
+                            </div>
+                        </div>
+
+
+                        <Table class="hidden lg:block w-full">
                             <TableHeader>
                                 <TableRow>
                                     <TableHead v-for="col in columns" :key="col.name">
