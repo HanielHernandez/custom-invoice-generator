@@ -22,6 +22,9 @@ import { singleIndex as singleIndexMapping } from 'instantsearch.js/es/lib/state
 import Label from './ui/label/Label.vue';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu';
 import DropdownMenuTrigger from './ui/dropdown-menu/DropdownMenuTrigger.vue';
+import TableHeader from './ui/table/TableHeader.vue';
+import TableRow from './ui/table/TableRow.vue';
+import TableHead from './ui/table/TableHead.vue';
 
 const routing = {
     router: historyRouter(),
@@ -192,7 +195,7 @@ const columns = [{
                                 v-for="item in items" :key="item.objectId">
                                 <div class="flex flex-col gap-2">
                                     <span class="text-neutral-800 font-bold text-sm"> {{ format(item.createdAt)
-                                        }}</span>
+                                    }}</span>
                                     <span class="text-neutral-600">{{ item.code }}</span>
                                     <span class="text-neutral-600 text-sm">
                                         {{ item.name }} - {{ item.customerName }}
@@ -218,11 +221,8 @@ const columns = [{
                                             </router-link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem @click="onInvoiceDelete(item.objectID)" class="text-red-600">
-
                                             <Trash :size="14" color="oklch(57.7% 0.245 27.325)" /> Delete
-
                                         </DropdownMenuItem>
-
                                     </DropdownMenuContent>
                                 </DropdownMenu>
 
