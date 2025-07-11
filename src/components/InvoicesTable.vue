@@ -22,10 +22,6 @@ import { singleIndex as singleIndexMapping } from 'instantsearch.js/es/lib/state
 import Label from './ui/label/Label.vue';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu';
 import DropdownMenuTrigger from './ui/dropdown-menu/DropdownMenuTrigger.vue';
-import TableHeader from './ui/table/TableHeader.vue';
-import TableRow from './ui/table/TableRow.vue';
-import TableHead from './ui/table/TableHead.vue';
-
 const routing = {
     router: historyRouter(),
     stateMaping: singleIndexMapping('invoices')
@@ -230,7 +226,7 @@ const columns = [{
                         </div>
 
 
-                        <Table class="hidden lg:block w-full">
+                        <Table class="hidden lg:table w-full">
                             <TableHeader>
                                 <TableRow>
                                     <TableHead v-for="col in columns" :key="col.name">
