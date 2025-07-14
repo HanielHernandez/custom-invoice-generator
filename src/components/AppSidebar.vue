@@ -7,23 +7,37 @@ import {
     SidebarGroupContent,
     SidebarGroupLabel,
     SidebarMenuButton,
-    SidebarMenuItem
+    SidebarMenuItem,
+    useSidebar
     // SidebarHeader,
 } from '@/components/ui/sidebar'
-import { ChevronsUpDown, HomeIcon, LogOut, ScrollTextIcon, StoreIcon, UserIcon } from 'lucide-vue-next';
-import SidebarMenu from './ui/sidebar/SidebarMenu.vue';
-import { useRole, type Role } from '@/composable/useRole';
-import { computed } from 'vue';
-import { auth } from '@/lib/firebase';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { useAuthStore } from '@/stores/authStore';
-import { useRouter } from 'vue-router';
+import {
+    ChevronsUpDown,
+    HomeIcon,
+    LogOut,
+    ScrollTextIcon,
+    StoreIcon,
+    UserIcon
+} from 'lucide-vue-next'
+import SidebarMenu from './ui/sidebar/SidebarMenu.vue'
+import { useRole, type Role } from '@/composable/useRole'
+import { computed, watch } from 'vue'
+import { auth } from '@/lib/firebase'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuTrigger
+} from './ui/dropdown-menu'
+import { useAuthStore } from '@/stores/authStore'
+import { useRoute, useRouter } from 'vue-router'
 
 type MenuItem = {
-    name: string,
-    url: string,
-    icon: unknown,
+    name: string
+    url: string
+    icon: unknown
     role: Role
 }
 const authStore = useAuthStore()
@@ -33,52 +47,53 @@ const user = computed(() => {
     return auth.currentUser
 })
 
+const menuItems: MenuItem[] = [
+    {
+        name: 'Home',
+        icon: HomeIcon,
+        url: '/dashboard/',
+        role: 'any'
+    },
+    {
+        name: 'Users',
+        icon: UserIcon,
+        url: '/dashboard/users',
+        role: 'admin'
+    },
 
-const menuItems: MenuItem[] =
-
-    [
-        {
-            name: "Home",
-            icon: HomeIcon,
-            url: "/dashboard/",
-            role: "any",
-        },
-        {
-            name: "Users",
-            icon: UserIcon,
-            url: "/dashboard/users",
-            role: "admin",
-        },
-
-        {
-            name: "Company",
-            icon: StoreIcon,
-            url: "/dashboard/company",
-            role: "any",
-        }
-    ]
+    {
+        name: 'Company',
+        icon: StoreIcon,
+        url: '/dashboard/company',
+        role: 'any'
+    }
+]
 
 const { role } = useRole()
 
-
 const availableItems = computed(() => {
     if (role == null) return []
-    return menuItems.filter(x => x.role == 'any' ? true : x.role == role.value)
+    return menuItems.filter((x) => (x.role == 'any' ? true : x.role == role.value))
 })
 
 const onLogOutClick = async () => {
-
     await authStore.logout()
     router.push('/auth/signin')
 }
 
+const route = useRoute()
+const { setOpenMobile } = useSidebar()
+
+watch(route, () => {
+    setOpenMobile(false)
+})
 </script>
 
 <template>
-    <Sidebar>
+    <Sidebar collapsible="offcanvas">
         <div class="flex h-15 items-center border-b px-4 gap-2">
             <ScrollTextIcon />
-            <h2 class="font-semibold "> Custom Invoice creator </h2>
+            <h2 class="font-semibold">Custom Invoice creator</h2>
         </div>
         <SidebarContent>
             <SidebarGroup>
@@ -96,24 +111,30 @@ const onLogOutClick = async () => {
                     </SidebarMenu>
                 </SidebarGroupContent>
             </SidebarGroup>
-
         </SidebarContent>
         <SidebarFooter>
-
             <SidebarMenu>
                 <SidebarMenuItem>
                     <DropdownMenu>
                         <DropdownMenuTrigger as-child>
-                            <SidebarMenuButton size="lg" v-if="user"
-                                class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                            <SidebarMenuButton
+                                size="lg"
+                                v-if="user"
+                                class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                            >
                                 <Avatar class="h-8 w-8 rounded-lg">
-                                    <AvatarImage :src="user.photoURL || ''" :alt="user.displayName" />
+                                    <AvatarImage
+                                        :src="user.photoURL || ''"
+                                        :alt="user.displayName"
+                                    />
                                     <AvatarFallback class="rounded-lg">
-                                        {{ user.displayName || "NA" }}
+                                        {{ user.displayName || 'NA' }}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div class="grid flex-1 text-left text-sm leading-tight">
-                                    <span class="truncate font-semibold">{{ user.displayName }}</span>
+                                    <span class="truncate font-semibold">{{
+                                        user.displayName
+                                    }}</span>
                                     <span class="truncate text-xs">{{ user.email }}</span>
                                 </div>
                                 <ChevronsUpDown class="ml-auto size-4" />
@@ -128,7 +149,6 @@ const onLogOutClick = async () => {
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-
                 </SidebarMenuItem>
             </SidebarMenu>
         </SidebarFooter>
