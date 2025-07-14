@@ -151,9 +151,8 @@ const columns = [{
                         Manage your invoices, view details, and export them.
                     </CardDescription>
                 </div>
-                <ais-sort-by :items="sortByOptions">
+                <ais-sort-by :items="sortByOptions" default:>
                     <template #default="{ items, currentRefinement, canRefine, refine }">
-
                         <div class="flex flex-start gap-2">
                             <Label>Sort:</Label>
                             <Select :model-value="currentRefinement" @update:model-value="refine" ref="sortBy"
@@ -165,15 +164,11 @@ const columns = [{
                                     <SelectItem v-for="item in items" :key="item.value" :value="item.value">
                                         {{ item.label }}
                                     </SelectItem>
-
                                 </SelectContent>
                             </Select>
                         </div>
-
-
                     </template>
                 </ais-sort-by>
-
             </CardHeader>
             <CardContent>
                 <ais-state-results v-slot="{ status, isSearchStalled, }">
@@ -191,7 +186,7 @@ const columns = [{
                                 v-for="item in items" :key="item.objectId">
                                 <div class="flex flex-col gap-2">
                                     <span class="text-neutral-800 font-bold text-sm"> {{ format(item.createdAt)
-                                    }}</span>
+                                        }}</span>
                                     <span class="text-neutral-600">{{ item.code }}</span>
                                     <span class="text-neutral-600 text-sm">
                                         {{ item.name }} - {{ item.customerName }}
@@ -224,8 +219,6 @@ const columns = [{
 
                             </div>
                         </div>
-
-
                         <Table class="hidden lg:table w-full">
                             <TableHeader>
                                 <TableRow>
