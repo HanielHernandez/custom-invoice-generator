@@ -8,7 +8,7 @@ import Input from './ui/input/Input.vue';
 import { computed, ref, useTemplateRef } from 'vue';
 import CardFooter from './ui/card/CardFooter.vue';
 import { Button } from './ui/button';
-import { ChevronLeft, ChevronRight, EditIcon, EllipsisVerticalIcon, PrinterIcon, Trash } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, EditIcon, EllipsisVerticalIcon, PrinterIcon, SearchIcon, Trash } from 'lucide-vue-next';
 import dayjs from 'dayjs'
 import InvoIceDeleteDialog from './InvoIceDeleteDialog.vue';
 import { useInvoiceStore } from '@/stores/InvoiceStore';
@@ -138,9 +138,16 @@ const columns = [{
     <ais-instant-search :search-client="searchClient" index-name="invoices" class="flex flex-col" :routing="routing">
         <ais-search-box class="mb-4">
             <template #default="{ currentRefinement, refine }">
-                <Input :value="currentRefinement"
+                <div class="relative w-full">
+   <Input :value="currentRefinement"
                     @update:model-value="(val: string | number) => refineInput(val as string, refine)"
-                    placeholder="Search invoices..." class="bg-white " />
+                    placeholder="Search invoices..." class="bg-white pl-10"  />
+
+                    <Button variant="ghost" class="absolute left-0 top-0 z-50">
+                        <SearchIcon class="h-6 w-6"/>
+                    </Button>
+                </div>
+
             </template>
         </ais-search-box>
         <Card>
