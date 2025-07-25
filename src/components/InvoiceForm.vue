@@ -12,16 +12,19 @@ import type { Company } from '@/types/company'
 import type { Invoice } from '@/types/invoice'
 import LoadingSpinner from './ui/LoadingSpinner.vue'
 
-
-const { company, loading = false, invoice } = defineProps<{
-    company: Company,
-    loading: boolean,
+const {
+    company,
+    loading = false,
+    invoice
+} = defineProps<{
+    company: Company
+    loading: boolean
     invoice?: Invoice
 }>()
 
 const emit = defineEmits<{
-    (e: "onSave", payload: Invoice): void,
-    (e: "onCancle."): void
+    (e: 'onSave', payload: Invoice): void
+    (e: 'onCancle.'): void
 }>()
 
 const invoiceSchema = z.object({
@@ -36,7 +39,7 @@ const invoiceSchema = z.object({
     total: z.number().min(1, 'Total is required'),
     description: z.string(),
     services: z.array(z.string()),
-    materials: z.boolean().optional(),
+    materials: z.boolean().optional()
 })
 
 const { handleSubmit, handleReset } = useForm({
@@ -45,13 +48,12 @@ const { handleSubmit, handleReset } = useForm({
 })
 
 const onSubmit = handleSubmit((data) => {
-    emit("onSave", data as Invoice)
+    emit('onSave', data as Invoice)
 })
 </script>
 
 <template>
     <form @submit.prevent="onSubmit" class="space-y-4 max-h-[calc(100vh-11rem)] overflow-y-auto">
-
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField v-slot="{ componentField }" name="name">
                 <FormItem>
@@ -72,7 +74,6 @@ const onSubmit = handleSubmit((data) => {
                     <FormMessage />
                 </FormItem>
             </FormField>
-
         </div>
 
         <FormField v-slot="{ componentField }" name="customerName">
@@ -155,20 +156,27 @@ const onSubmit = handleSubmit((data) => {
             </FormItem>
         </FormField>
 
-
-        <FormField v-for="(service) in company.tags" v-slot="{ value, handleChange }" :key="service" type="checkbox"
-            :value="service" :unchecked-value="false" name="services">
+        <FormField
+            v-for="service in company.tags"
+            v-slot="{ value, handleChange }"
+            :key="service"
+            type="checkbox"
+            :value="service"
+            :unchecked-value="false"
+            name="services"
+        >
             <FormItem class="flex flex-row items-start space-x-3 space-y-0">
                 <FormControl>
-                    <Checkbox :model-value="value.includes(service)" @update:model-value="handleChange" />
+                    <Checkbox
+                        :model-value="value.includes(service)"
+                        @update:model-value="handleChange"
+                    />
                 </FormControl>
                 <FormLabel class="font-normal">
                     {{ service }}
                 </FormLabel>
             </FormItem>
         </FormField>
-
-
 
         <!-- <FormField name="services" v-if="company">
             <FormItem>
@@ -196,7 +204,6 @@ const onSubmit = handleSubmit((data) => {
 
                 <FormControl>
                     <div class="flex items-center gap-2">
-
                         <Checkbox :value="value" @update:model-value="(e) => handleChange(e)" />
                         <FormLabel>Include Materials</FormLabel>
                     </div>
@@ -206,9 +213,9 @@ const onSubmit = handleSubmit((data) => {
             </FormItem>
         </FormField>
 
-
         <div class="flex gap-4 pt-4 sticky botom-0 left-0">
-            <Button type="submit">Submit Invoice
+            <Button type="submit"
+                >Submit Invoice
                 <LoadingSpinner class="ml-2" v-if="loading" />
             </Button>
             <Button type="button" variant="outline" @click="handleReset">Reset</Button>

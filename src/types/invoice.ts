@@ -1,5 +1,11 @@
 import type { Company } from './company'
 
+export type Item = {
+    description: string
+    price: number
+    quantity: number
+}
+
 export interface Invoice {
     id?: string
     code?: string
@@ -21,4 +27,5 @@ export interface Invoice {
     createdAt?: number
     deleted?: boolean
     deletedAt?: number | null
+    items?: Item[]
 }

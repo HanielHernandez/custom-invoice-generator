@@ -76,7 +76,7 @@ const sortByOptions = [{
     label: 'Code asc.', value: 'invoices_code_asc'
 }]
 
-const format = (tiemstamp: number) => dayjs(new Date(tiemstamp)).format("DD/MM/YYYY HH:mm:ss A")
+const format = (tiemstamp: number) => dayjs(new Date(tiemstamp)).format("DD/MM/YYYY")
 const changeSort = (value: string) => {
     console.log(sortBy)
     // const sortByEl: HTMLSelectElement | null = document.querySelector('.ais-SortBy-select')
@@ -118,19 +118,14 @@ const columns = [{
     name: "# Id",
     property: 'code'
 },
-{
-    name: "Name:",
-    property: 'name'
-},
 
-{
-    name: "Customer:",
-    property: 'customerName'
-},
 {
     name: "Date:",
     property: 'createdAt'
-}]
+},{
+    name: "Actions:",
+    property: 'actions'
+},]
 
 
 </script>
@@ -188,45 +183,7 @@ const columns = [{
 
                 <ais-hits>
                     <template #default="{ items }">
-                        <div class="flex flex-col lg:hidden gap-4">
-                            <div class="flex flex-row relative border rounded-sm px-4 py-3 pr-14 gap-4 items-start space-bwete"
-                                v-for="item in items" :key="item.objectId">
-                                <div class="flex flex-col gap-2">
-                                    <span class="text-neutral-800 font-bold text-sm"> {{ format(item.createdAt)
-                                        }}</span>
-                                    <span class="text-neutral-600">{{ item.code }}</span>
-                                    <span class="text-neutral-600 text-sm">
-                                        {{ item.name }} - {{ item.customerName }}
-                                    </span>
-                                </div>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger class="absolute top-4 right-4">
-                                        <EllipsisVerticalIcon />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                        <DropdownMenuItem>
-                                            <router-link tar :to="`/dashboard/invoices/${item.objectID}/print`"
-                                                target="_blank" rel="noopener noreferrer"
-                                                class=" flex flex-row items-center gap-2 w-full">
-                                                <PrinterIcon class="h-4 w-4" /> Print
-                                            </router-link>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem>
-                                            <router-link :to="`/dashboard/invoices/${item.objectID}/edit`"
-                                                class=" flex flex-row items-center gap-2 w-ful">
-                                                <EditIcon class="h-4 w-4 " />
-                                                Edit
-                                            </router-link>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem @click="onInvoiceDelete(item.objectID)" class="text-red-600">
-                                            <Trash :size="14" color="oklch(57.7% 0.245 27.325)" /> Delete
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-
-                            </div>
-                        </div>
-                        <Table class="hidden lg:table w-full">
+                        <Table class="w-full">
                             <TableHeader>
                                 <TableRow>
                                     <TableHead v-for="col in columns" :key="col.name">
@@ -236,7 +193,7 @@ const columns = [{
                                         </div>
                                     </TableHead>
 
-                                    <TableHead>Actions </TableHead>
+
                                 </TableRow>
                             </TableHeader>
                             <TableBody v-if="items">
@@ -244,32 +201,41 @@ const columns = [{
                                     No results found
                                 </div>
                                 <TableRow v-for="item in items" :key="item.objectId">
-                                    <TableCell>
-                                        {{ item.code }}
-                                    </TableCell>
-                                    <TableCell>
+                                    <TableCell class="w-1/3">
+                                        <p class="text-wrap">
+                                               {{ item.code }} <br>
                                         {{ item.name }}
+                                        </p>
+
                                     </TableCell>
-                                    <TableCell>
-                                        {{ item.customerName }}
-                                    </TableCell>
-                                    <TableCell>
+
+                                    <TableCell class="w-1/3">
                                         {{ format(item.createdAt) }}
                                     </TableCell>
-                                    <TableCell>
-                                        <div class="flex items-center">
+                                    <TableCell class="w-1/3">
+                                        <div class="flex items-center flex-col lg:flex-row">
                                             <router-link :to="`/dashboard/invoices/${item.objectID}/edit`"
                                                 class="px-3 py-2">
-                                                <EditIcon class="h-4 w-4" />
+                                                <Button>
+                                                    <EditIcon class="h-4 w-4" />
+                                                    Edit
+                                                </Button>
+
                                             </router-link>
                                             <router-link tar :to="`/dashboard/invoices/${item.objectID}/print`"
                                                 target="_blank" rel="noopener noreferrer" class="px-3 py-2">
-                                                <PrinterIcon class="h-4 w-4" />
+                                                <Button>
+                                                    <PrinterIcon class="h-4 w-4" />
+                                                    Print
+                                                </Button>
+
                                             </router-link>
-                                            <Button variant="ghost" title="Remove invoice"
+                                            <Button variant="destructive" title="Remove invoice"
                                                 @click="onInvoiceDelete(item.objectID)"
-                                                class="text-red-600 opacity-75 hover:bg-red-200  hover:text-red-600 hover:opacity-100 ">
+                                                class="0 opacity-75 hover:bg-red-200  hover:text-red-600 hover:opacity-100 ">
                                                 <Trash :size="14" />
+
+                                                Delete
                                             </Button>
                                         </div>
                                     </TableCell>
