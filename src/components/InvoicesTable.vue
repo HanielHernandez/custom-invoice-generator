@@ -8,7 +8,7 @@ import Input from './ui/input/Input.vue';
 import { computed, ref, useTemplateRef } from 'vue';
 import CardFooter from './ui/card/CardFooter.vue';
 import { Button } from './ui/button';
-import { ChevronLeft, ChevronRight, EditIcon, EllipsisVerticalIcon, PrinterIcon, SearchIcon, Trash } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, EditIcon, EyeIcon,  SearchIcon, Trash } from 'lucide-vue-next';
 import dayjs from 'dayjs'
 import InvoIceDeleteDialog from './InvoIceDeleteDialog.vue';
 import { useInvoiceStore } from '@/stores/InvoiceStore';
@@ -20,8 +20,7 @@ import { useRole } from '@/composable/useRole';
 import { history as historyRouter } from 'instantsearch.js/es/lib/routers';
 import { singleIndex as singleIndexMapping } from 'instantsearch.js/es/lib/stateMappings';
 import Label from './ui/label/Label.vue';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu';
-import DropdownMenuTrigger from './ui/dropdown-menu/DropdownMenuTrigger.vue';
+
 const routing = {
     router: historyRouter(),
     stateMaping: singleIndexMapping('invoices')
@@ -118,7 +117,6 @@ const columns = [{
     name: "# Id",
     property: 'code'
 },
-
 {
     name: "Date:",
     property: 'createdAt'
@@ -225,8 +223,8 @@ const columns = [{
                                             <router-link tar :to="`/dashboard/invoices/${item.objectID}/print`"
                                                 target="_blank" rel="noopener noreferrer" class="px-3 py-2">
                                                 <Button>
-                                                    <PrinterIcon class="h-4 w-4" />
-                                                    Print
+                                                    <EyeIcon class="h-4 w-4" />
+                                                    View
                                                 </Button>
 
                                             </router-link>
