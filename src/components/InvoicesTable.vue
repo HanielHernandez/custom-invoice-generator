@@ -57,7 +57,7 @@ const refineInput = (val: string, refine: (val: string) => void) => {
 }
 const sortByOptions = [
     {
-        label: 'default.',
+        label: 'Relevance',
         value: 'invoices'
     },
     {
@@ -282,12 +282,7 @@ const columns = [
                     </template>
                 </ais-hits>
                 <ais-refinement-list attribute="name" />
-                <AisConfigure
-                    :hits-per-page.camel="10"
-                    :filters="filters"
-                    :indexName="'invoices_createdAt_desc'"
-                    :sortFacetValuesBy="'alpha'"
-                />
+                <AisConfigure :hits-per-page.camel="10" />
             </CardContent>
             <CardFooter>
                 <ais-pagination class="w-full">
