@@ -58,7 +58,7 @@ const refineInput = (val: string, refine: (val: string) => void) => {
 const sortByOptions = [
     {
         label: 'default.',
-        value: 'invoices_createdAt_desc'
+        value: 'invoices'
     },
     {
         label: 'Created at desc.',
@@ -178,7 +178,7 @@ const columns = [
                         Manage your invoices, view details, and export them.
                     </CardDescription>
                 </div>
-                <ais-sort-by :items="sortByOptions" default-refinement="created_at_desc">
+                <ais-sort-by :items="sortByOptions" default-refinement="invoices_createdAt_desc">
                     <template #default="{ items, currentRefinement, canRefine, refine }">
                         <div class="flex flex-start gap-2">
                             <Label>Sort:</Label>
@@ -282,7 +282,12 @@ const columns = [
                     </template>
                 </ais-hits>
                 <ais-refinement-list attribute="name" />
-                <AisConfigure :hits-per-page.camel="10" :filters="filters" />
+                <AisConfigure
+                    :hits-per-page.camel="10"
+                    :filters="filters"
+                    :indexName="'invoices_createdAt_desc'"
+                    :sortFacetValuesBy="'alpha'"
+                />
             </CardContent>
             <CardFooter>
                 <ais-pagination class="w-full">

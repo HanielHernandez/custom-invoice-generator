@@ -10,11 +10,12 @@ import { useInvoiceStore } from '@/stores/InvoiceStore'
 import type { Invoice } from '@/types/invoice'
 import { storeToRefs } from 'pinia'
 import { onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { RouterLink } from 'vue-router'
-import { ArrowBigLeft, ArrowLeft } from 'lucide-vue-next'
+import { ArrowLeft } from 'lucide-vue-next'
 const route = useRoute()
+const router = useRouter()
 const invoices = useInvoiceStore()
 const { invoice, loading, fetching } = storeToRefs(invoices)
 
@@ -31,7 +32,10 @@ const onFormSave = async (payloadInvocie: Invoice) => {
     toast('Invoice updated succesfully', {
         position: 'top-center',
         description: 'Invoice was successuflly updated reload to refresh the page',
-        closeButton: true
+        closeButton: true,
+        onDismiss: () => {
+            router.push('/')
+        }
     })
 }
 </script>
