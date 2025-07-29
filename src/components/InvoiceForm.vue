@@ -150,7 +150,7 @@ const onSubmit = handleSubmit((data) => {
             <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                    <Textarea v-bind="componentField" placeholder="Enter description" />
+                    <Textarea v-bind="componentField" rows="10" placeholder="Enter description" />
                 </FormControl>
                 <FormMessage />
             </FormItem>
@@ -199,17 +199,11 @@ const onSubmit = handleSubmit((data) => {
         </FormField> -->
 
         <FormField v-slot="{ value, handleChange }" name="materials">
-            <FormItem>
-                <FormLabel>Include Materials</FormLabel>
-
+            <FormItem class="flex flex-row items-start space-x-3 space-y-0 mt-3">
                 <FormControl>
-                    <div class="flex items-center gap-2">
-                        <Checkbox :value="value" @update:model-value="(e) => handleChange(e)" />
-                        <FormLabel>Include Materials</FormLabel>
-                    </div>
+                    <Checkbox :model-value="value" @update:model-value="handleChange" />
                 </FormControl>
-
-                <FormMessage />
+                <FormLabel>Include Materials</FormLabel>
             </FormItem>
         </FormField>
 
