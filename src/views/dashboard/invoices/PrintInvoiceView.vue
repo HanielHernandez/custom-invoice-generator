@@ -48,7 +48,12 @@ const print = () => {
 <template>
     <div class="w-full max-w-180 mx-auto">
         <div class="flex flex-row items-center justify-center text-center mb-4">
-            <Button variant="ghost" :as="RouterLink" :to="`/dashboard/invoices/`">
+            <Button
+                variant="ghost"
+                :as="RouterLink"
+                :to="`/dashboard/invoices/`"
+                class="print:hidden"
+            >
                 <ArrowLeftIcon /> Go Back
             </Button>
 
@@ -81,16 +86,16 @@ const print = () => {
                             <span class="font-bold">Date:</span> {{ formatDate(invoice.createdAt) }}
                         </p>
                         <p><span class="font-bold">Estimate:</span> {{ invoice.stimates }}</p>
-                        <div class="mt-2 text-right flex flex-col gap-2">
+                        <div class="mt-2 text-right flex flex-col gap-2 mb-4">
                             <p>
-                                <b>Services</b>
+                                <b>Services:</b>
                             </p>
                             <div
                                 v-for="service in invoice.services"
                                 :key="service"
-                                class="text-green-600 font-semibold flex items-center gap-2 justify-end"
+                                class="text-green-600 font-semibold text-sm flex items-center gap-2 justify-end"
                             >
-                                <CheckSquare />
+                                <CheckSquare class="h-3.5" />
                                 <span> {{ service.toUpperCase() }} </span>
                             </div>
                         </div>
