@@ -175,14 +175,18 @@ const columns = [
             </template>
         </ais-search-box>
         <Card>
-            <CardHeader class="flex flex-col md:flex-row justify-between">
+            <CardHeader class="hidden flex-col md:flex-row justify-between">
                 <div class="mb-4 md:mb-0">
                     <CardTitle> Invoice List</CardTitle>
                     <CardDescription>
                         Manage your invoices, view details, and export them.
                     </CardDescription>
                 </div>
-                <ais-sort-by :items="sortByOptions" default-refinement="invoices_createdAt_desc">
+                <ais-sort-by
+                    :items="sortByOptions"
+                    class="hidden"
+                    default-refinement="invoices_createdAt_desc"
+                >
                     <template #default="{ items, currentRefinement, canRefine, refine }">
                         <div class="flex flex-start gap-2">
                             <Label>Sort:</Label>

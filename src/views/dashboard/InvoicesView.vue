@@ -58,6 +58,10 @@ const onFormSave = async (values: Invoice) => {
 
         dialogOpen.value = false
 
+        setTimeout(() => {
+            router.go(0)
+        }, 1000)
+
         toast('Invoice created succesfully', {
             position: 'top-center',
             description: 'your invoice hast been save successfully',
