@@ -247,7 +247,7 @@ const onSubmit = handleSubmit(async (values) => {
 
                     <FormField v-slot="{ value, handleChange }" name="tags">
                         <FormItem>
-                            <FormLabel>Tags (comma-separated)</FormLabel>
+                            <FormLabel>Services (comma-separated)</FormLabel>
                             <FormControl>
                                 <Input
                                     :model-value="value?.join(', ')"

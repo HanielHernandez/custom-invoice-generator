@@ -61,10 +61,11 @@ const onFormSave = async (values: Invoice) => {
         toast('Invoice created succesfully', {
             position: 'top-center',
             description: 'your invoice hast been save successfully',
-            closeButton: true
+            closeButton: true,
+            onDismiss: () => {
+                router.go(0)
+            }
         })
-
-        router.go(0)
     } catch (e) {
         console.error(e)
     }

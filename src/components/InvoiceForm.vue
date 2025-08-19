@@ -2,7 +2,14 @@
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { toTypedSchema } from '@vee-validate/zod'
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
+import {
+    FormField,
+    FormItem,
+    FormLabel,
+    FormControl,
+    FormMessage,
+    FormDescription
+} from '@/components/ui/form'
 import Input from './ui/input/Input.vue'
 import Textarea from './ui/textarea/Textarea.vue'
 import Button from './ui/button/Button.vue'
@@ -11,6 +18,7 @@ import Checkbox from './ui/checkbox/Checkbox.vue'
 import type { Company } from '@/types/company'
 import type { Invoice } from '@/types/invoice'
 import LoadingSpinner from './ui/LoadingSpinner.vue'
+import { HamburgerIcon, MenuIcon, StoreIcon } from 'lucide-vue-next'
 
 const {
     company,
@@ -156,6 +164,11 @@ const onSubmit = handleSubmit((data) => {
             </FormItem>
         </FormField>
 
+        <label
+            class="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 data-[error=true]:text-destructive-foreground"
+        >
+            Services
+        </label>
         <FormField
             v-for="service in company.tags"
             v-slot="{ value, handleChange }"
@@ -177,6 +190,14 @@ const onSubmit = handleSubmit((data) => {
                 </FormLabel>
             </FormItem>
         </FormField>
+        <div v-if="!company.tags.length" class="text-sm text-neutral-600 leading-5">
+            <p>
+                No services saved for your company, press menu button (<span>
+                    <MenuIcon class="inline h-3.5" /> </span
+                >) at the top left part of the screen and then press
+                <b> <StoreIcon class="inline h-3.5" /> company</b> to add them
+            </p>
+        </div>
 
         <!-- <FormField name="services" v-if="company">
             <FormItem>
@@ -199,11 +220,17 @@ const onSubmit = handleSubmit((data) => {
         </FormField> -->
 
         <FormField v-slot="{ value, handleChange }" name="materials">
-            <FormItem class="flex flex-row items-start space-x-3 space-y-0 mt-3">
-                <FormControl>
-                    <Checkbox :model-value="value" @update:model-value="handleChange" />
-                </FormControl>
+            <FormItem class="flex flex-col items-start space-x-3 space-y-0 mt-3">
                 <FormLabel>Include Materials</FormLabel>
+                <FormControl class="flex flex-row gap-2 items-center">
+                    <div>
+                        <Checkbox :model-value="value" @update:model-value="handleChange" />
+                        <FormDescription
+                            >By checking this box the invoice will include the cost of any
+                            material</FormDescription
+                        >
+                    </div>
+                </FormControl>
             </FormItem>
         </FormField>
 

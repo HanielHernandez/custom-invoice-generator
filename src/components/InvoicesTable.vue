@@ -27,6 +27,7 @@ import { useRole } from '@/composable/useRole'
 import { history as historyRouter } from 'instantsearch.js/es/lib/routers'
 import { singleIndex as singleIndexMapping } from 'instantsearch.js/es/lib/stateMappings'
 import Label from './ui/label/Label.vue'
+import { useRouter } from 'vue-router'
 
 const routing = {
     router: historyRouter(),
@@ -38,7 +39,7 @@ const openDeleteModal = ref(false)
 const invoiceId = ref<string | null>(null)
 const invoiceStore = useInvoiceStore()
 const { role } = useRole()
-
+const router = useRouter()
 const filters = computed(() => {
     const baseFilter =
         auth.currentUser && auth.currentUser.uid
@@ -118,11 +119,14 @@ const OnDeleteContinue = async () => {
 
     await invoiceStore.remove(invoiceId.value)
     onDeleteCancel()
+
     toast.success('Invoice deleted', {
         position: 'top-center',
         description: 'Invoice was deleted succesfully',
         closeButton: true
     })
+
+    router.go(0)
 }
 
 const onInvoiceDelete = (id: string) => {
