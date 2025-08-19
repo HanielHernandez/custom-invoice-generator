@@ -3,10 +3,10 @@ import Button from '@/components/ui/button/Button.vue'
 import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
 import { useCompanyStore } from '@/stores/companyStore'
 import { useInvoiceStore } from '@/stores/InvoiceStore'
-import { CheckSquare, PrinterIcon } from 'lucide-vue-next'
+import { ArrowLeft, ArrowLeftIcon, CheckSquare, FileIcon, PrinterIcon } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
-import { onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 
 const route = useRoute()
 const invoices = useInvoiceStore()
@@ -15,10 +15,13 @@ const companyStore = useCompanyStore()
 const { invoice, fetching } = storeToRefs(invoices)
 const { company } = storeToRefs(companyStore)
 
+const id = computed(() =>
+    Array.isArray(route.params.id) ? route.params.id.join() : route.params.id
+)
+
 onMounted(async () => {
-    const id = Array.isArray(route.params.id) ? route.params.id.join() : route.params.id
     // await Promise.all([invoices.find(id), loadCompany()])
-    await invoices.find(id)
+    await invoices.find(id.value)
     await loadCompany()
 
     // window.print()
@@ -44,9 +47,13 @@ const print = () => {
 </script>
 <template>
     <div class="w-full max-w-180 mx-auto">
-        <div class="text-center mb-4">
+        <div class="flex flex-row items-center justify-center text-center mb-4">
+            <Button variant="ghost" :as="RouterLink" :to="`/dashboard/invoices/`">
+                <ArrowLeftIcon /> Go Back
+            </Button>
+
             <Button variant="ghost" @click="print" class="print:hidden">
-                <PrinterIcon /> <span>Print for your records</span>
+                <FileIcon /> <span>Download</span>
             </Button>
         </div>
 
