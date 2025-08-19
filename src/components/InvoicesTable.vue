@@ -282,7 +282,7 @@ const columns = [
                     </template>
                 </ais-hits>
                 <ais-refinement-list attribute="name" />
-                <AisConfigure :hits-per-page.camel="10" />
+                <AisConfigure :hits-per-page.camel="10" :filters="filters" />
             </CardContent>
             <CardFooter>
                 <ais-pagination class="w-full">
