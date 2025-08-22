@@ -81,7 +81,7 @@ const print = () => {
 
         <!---->
         <div
-            class="min-w-180 w-180 md:scale-100 mx-auto p-6 text-sm z-20 relative !print:scale-100"
+            class="min-w-180 w-180 md:scale-100 mx-auto p-6 text-sm z-20 relative print:scale-100 responsive-scale"
             :style="{
                 transformOrigin: 'top left',
                 transform: `scale(${scale})`
@@ -215,4 +215,10 @@ const print = () => {
         </div>
     </div>
 </template>
-<style lang="css" scoped></style>
+<style lang="css" scoped>
+@media print {
+    .responsive-scale {
+        transform: scale(1) !important;
+    }
+}
+</style>
