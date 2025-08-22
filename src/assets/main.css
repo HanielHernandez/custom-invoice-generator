@@ -162,4 +162,9 @@
         max-height: 100vh;
         overflow: hidden;
     }
+
+    main {
+        max-height: 100vh;
+        overflow: hidden;
+    }
 }
