@@ -4,6 +4,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+* {
+    box-sizing: border-box;
+}
+
 @theme inline {
     --font-great-vibes: 'Great Vibes', cursive;
     --color-background: var(--background);
@@ -145,5 +149,17 @@
     }
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+@media print {
+    @page {
+        size: A4; /* or letter */
+        margin: 0;
+    }
+
+    body {
+        max-height: 100vh;
+        overflow: hidden;
     }
 }

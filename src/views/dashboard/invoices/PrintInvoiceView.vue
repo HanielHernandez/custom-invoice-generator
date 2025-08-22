@@ -3,9 +3,9 @@ import Button from '@/components/ui/button/Button.vue'
 import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
 import { useCompanyStore } from '@/stores/companyStore'
 import { useInvoiceStore } from '@/stores/InvoiceStore'
-import { ArrowLeft, ArrowLeftIcon, CheckSquare, FileIcon, PrinterIcon } from 'lucide-vue-next'
+import { ArrowLeftIcon, CheckSquare, FileIcon } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -24,7 +24,20 @@ onMounted(async () => {
     await invoices.find(id.value)
     await loadCompany()
 
-    // window.print()
+    updateScale()
+    window.addEventListener('resize', updateScale)
+})
+
+const minWidth = 800
+const scale = ref(1)
+
+function updateScale() {
+    const screenWidth = window.innerWidth
+    scale.value = screenWidth < minWidth ? screenWidth / minWidth : 1
+}
+
+onUnmounted(() => {
+    window.removeEventListener('resize', updateScale)
 })
 
 const loadCompany = async () => {
@@ -46,8 +59,8 @@ const print = () => {
 }
 </script>
 <template>
-    <div class="w-full max-w-180 mx-auto">
-        <div class="flex flex-row items-center justify-center text-center mb-4">
+    <div class="flex flex-col items-center mx-auto print:max-h-screen print:overflow-hidden w-full">
+        <div class="flex flex-row w-full items-center justify-center text-center mb-4">
             <Button
                 variant="ghost"
                 :as="RouterLink"
@@ -67,7 +80,14 @@ const print = () => {
         </div>
 
         <!---->
-        <div class="mx-auto p-6 text-sm z-20 relative" v-if="invoice && company">
+        <div
+            class="min-w-180 w-180 md:scale-100 mx-auto p-6 text-sm z-20 relative !print:scale-100"
+            :style="{
+                transformOrigin: 'top left',
+                transform: `scale(${scale})`
+            }"
+            v-if="invoice && company"
+        >
             <!-- Header -->
             <img
                 class="absolute w-1/2 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-20"
@@ -156,7 +176,7 @@ const print = () => {
             </div>
 
             <div class="text-center text-sm mb-6">
-                <p><b>Than you for your preference!</b></p>
+                <p><b>Thank you for your preference!</b></p>
                 <p>if you have any question concerning this document</p>
                 <p class="font-bold" v-if="company">
                     {{ company.email || 'franciscopainting@gmail.com' }}
@@ -184,7 +204,7 @@ const print = () => {
                     <p
                         :src="company.signature"
                         alt="Signature"
-                        class="font-great-vibes text-4xl h-10 mb-1"
+                        class="font-great-vibes text-2xl h-10 mb-1"
                     >
                         {{ company.signature }}
                     </p>
@@ -195,4 +215,4 @@ const print = () => {
         </div>
     </div>
 </template>
-<style lang="css"></style>
+<style lang="css" scoped></style>
