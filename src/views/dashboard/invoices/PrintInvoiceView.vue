@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Button from '@/components/ui/button/Button.vue'
+import Checkbox from '@/components/ui/checkbox/Checkbox.vue'
 import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
 import { useCompanyStore } from '@/stores/companyStore'
 import { useInvoiceStore } from '@/stores/InvoiceStore'
@@ -181,12 +182,11 @@ const print = () => {
                 <p class="font-bold" v-if="company">
                     {{ company.email || 'franciscopainting@gmail.com' }}
                 </p>
-                <p class="text-sm">
+                <div class="flex flex-row items-center justify-center text-sm gap-2 mt-2">
                     Materials:
-                    <span class="font-semibold">{{
-                        invoice.materials ? '✔ Company' : 'Client'
-                    }}</span>
-                </p>
+                    <input type="checkbox" :checked="!invoice.materials" class="font" />Company
+                    <input type="checkbox" :checked="invoice.materials" class="font" /> Client
+                </div>
             </div>
 
             <!-- Terms -->

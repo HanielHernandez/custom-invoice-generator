@@ -226,8 +226,8 @@ const onSubmit = handleSubmit((data) => {
                     <div>
                         <Checkbox :model-value="value" @update:model-value="handleChange" />
                         <FormDescription
-                            >By checking this box the invoice will include the cost of any
-                            material</FormDescription
+                            >By checking this box the invoice will include the cost of any material
+                            to the client</FormDescription
                         >
                     </div>
                 </FormControl>
