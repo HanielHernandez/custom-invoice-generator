@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import Button from '@/components/ui/button/Button.vue'
-import Checkbox from '@/components/ui/checkbox/Checkbox.vue'
 import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
 import { useCompanyStore } from '@/stores/companyStore'
 import { useInvoiceStore } from '@/stores/InvoiceStore'
-import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
-import { ArrowLeftIcon, CheckSquare, FileIcon, Share2Icon, ShareIcon } from 'lucide-vue-next'
+import { ArrowLeftIcon, CheckSquare, FileIcon, Share2Icon } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { onMounted, ref, watch, computed, onUnmounted } from 'vue'
+import { useRoute, RouterLink } from 'vue-router'
+import html2pdf from 'html2pdf.js'
 
 const route = useRoute()
+const logoBase64 = ref('')
 const invoices = useInvoiceStore()
 const companyStore = useCompanyStore()
 const pdfContent = ref(null)
@@ -47,11 +46,13 @@ onUnmounted(() => {
 const loadCompany = async () => {
     if (invoice.value == null) return
     const { company } = invoice.value
-
-    console.log(company.id)
-
     if (company.id) await companyStore.find(company.id)
 }
+
+watch(company, async () => {
+    if (company.value == null) return
+    logoBase64.value = await loadImageAsBase64(company.value.logoUrl)
+})
 
 const formatDate = (timestamp?: number): string => {
     if (!timestamp) return new Date().toLocaleDateString()
@@ -62,40 +63,55 @@ const print = () => {
     window.print()
 }
 
+const loadImageAsBase64 = async (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous' // important for CORS
+        img.src = url
+        img.onload = () => {
+            const canvas = document.createElement('canvas')
+            canvas.width = img.width
+            canvas.height = img.height
+            const ctx = canvas.getContext('2d')
+            if (!ctx) return reject('Canvas not supported')
+            ctx.drawImage(img, 0, 0)
+            resolve(canvas.toDataURL('image/png'))
+        }
+        img.onerror = reject
+    })
+}
+
 const share = async () => {
     try {
-        // 1. Capture the div as canvas
         const element = pdfContent.value
-
         if (!element) return
 
-        const canvas = await html2canvas(element, { scale: 2 })
-        const imgData = canvas.toDataURL('image/png')
+        // File name from your invoice
+        const name = `${invoice.value?.code || 'invoice'}.pdf`
 
-        // 2. Create PDF
-        const pdf = new jsPDF('p', 'mm', 'a4')
-        const pageWidth = pdf.internal.pageSize.getWidth()
-        //const pageHeight = pdf.internal.pageSize.getHeight();
+        // 1. Generate PDF as Blob
+        const opt = {
+            margin: 0.5,
+            filename: name,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true, // 👈 permite imágenes externas
+                allowTaint: true
+            }, // 👈 ensure images load
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        }
 
-        // Scale image to fit page
-        const imgProps = pdf.getImageProperties(imgData)
-        const ratio = imgProps.width / imgProps.height
-        const pdfWidth = pageWidth
-        const pdfHeight = pageWidth / ratio
+        const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob')
 
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+        // 2a. Trigger download
+        html2pdf().set(opt).from(element).save()
 
-        // 3a. Trigger download
-        const name = `${invoice.value?.code}.pdf`
-        pdf.save(name)
-
-        // 3b. Optionally share on mobile (if supported)
+        // 2b. Optionally share on mobile
         if (navigator.share) {
-            const pdfBlob = pdf.output('blob')
-            const file = new File([pdfBlob], 'invoice.pdf', { type: 'application/pdf' })
-
+            const file = new File([pdfBlob], name, { type: 'application/pdf' })
             await navigator.share({
-                title: 'Invoice #123',
+                title: 'Invoice',
                 text: 'Here is your invoice',
                 files: [file]
             })
@@ -143,7 +159,8 @@ const share = async () => {
             <!-- Header -->
             <img
                 class="absolute w-1/2 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-20"
-                :src="company.logoUrl"
+                :src="logoBase64"
+                crossorigin="anonymous"
             />
 
             <div class="flex flex-col mb-4">
@@ -151,7 +168,12 @@ const share = async () => {
                     {{ invoice.code }}
                 </div>
                 <div class="flex justify-between items-center">
-                    <img :src="company.logoUrl" alt="Company Logo" class="h-20 w-auto mb-2" />
+                    <img
+                        :src="logoBase64"
+                        crossorigin="anonymous"
+                        alt="Company Logo"
+                        class="h-20 w-auto mb-2"
+                    />
 
                     <div class="text-right">
                         <p>
