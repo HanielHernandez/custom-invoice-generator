@@ -5,7 +5,7 @@ import { useCompanyStore } from '@/stores/companyStore'
 import { useInvoiceStore } from '@/stores/InvoiceStore'
 import { ArrowLeftIcon, CheckSquare, FileIcon, Share2Icon } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
-import { onMounted, ref, watch, computed, onUnmounted } from 'vue'
+import { onMounted, ref, watch, computed, onUnmounted, nextTick } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import html2pdf from 'html2pdf.js'
 
@@ -13,7 +13,7 @@ const route = useRoute()
 const logoBase64 = ref('')
 const invoices = useInvoiceStore()
 const companyStore = useCompanyStore()
-const pdfContent = ref(null)
+const pdfContent = ref<HTMLElement | null>(null)
 
 const { invoice, fetching } = storeToRefs(invoices)
 const { company } = storeToRefs(companyStore)
@@ -83,39 +83,78 @@ const loadImageAsBase64 = async (url: string): Promise<string> => {
 
 const share = async () => {
     try {
-        const element = pdfContent.value
-        if (!element) return
+        const original = pdfContent.value
+        if (!original) return
 
-        // File name from your invoice
         const name = `${invoice.value?.code || 'invoice'}.pdf`
+        const pxWidth = minWidth // 800px virtual width for capture
 
-        // 1. Generate PDF as Blob
+        // 1) Make a deep clone we can freely modify
+        const clone = original.cloneNode(true) as HTMLElement
+        clone.id = 'pdfContentClone'
+
+        // 2) Put it off-screen but still rendered
+        const wrapper = document.createElement('div')
+        wrapper.style.position = 'fixed'
+        wrapper.style.left = '-10000px'
+        wrapper.style.top = '0'
+        wrapper.style.width = pxWidth + 'px'
+        wrapper.appendChild(clone)
+        document.body.appendChild(wrapper)
+
+        // 3) Strip scaling + fix width + override vw font-size
+        //    (inline styles with !important beat your scoped CSS rules)
+        const setImportant = (el: HTMLElement, prop: string, value: string) =>
+            el.style.setProperty(prop, value, 'important')
+
+        setImportant(clone, 'transform', 'none')
+        setImportant(clone, 'transform-origin', 'top left')
+        setImportant(clone, 'width', pxWidth + 'px')
+        setImportant(clone, 'min-width', pxWidth + 'px')
+        setImportant(clone, 'font-size', '12px') // kill 0.833vw during capture
+
+        // Also remove scale() from any descendants that might have inline transforms
+        clone.querySelectorAll<HTMLElement>('[style*="transform"]').forEach((n) => {
+            const t = n.style.transform || ''
+            if (t.includes('scale')) n.style.transform = t.replace(/scale\([^)]*\)/g, '')
+        })
+
+        await nextTick()
+
+        // 4) Generate the PDF from the clone
         const opt = {
             margin: 0.5,
             filename: name,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: {
-                scale: 2,
-                useCORS: true, // 👈 permite imágenes externas
-                allowTaint: true
-            }, // 👈 ensure images load
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                scale: 2, // better resolution
+                useCORS: true,
+                allowTaint: true,
+                windowWidth: pxWidth // make vw compute against 800px, not the phone width
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'avoid-all', 'legacy'] }
         }
 
-        const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob')
+        // Run once: get blob, then trigger download + (optional) Web Share
+        const blob: Blob = (await html2pdf().set(opt).from(clone).outputPdf('blob')) as Blob
 
-        // 2a. Trigger download
-        html2pdf().set(opt).from(element).save()
+        // Download
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = name
+        a.click()
+        URL.revokeObjectURL(url)
 
-        // 2b. Optionally share on mobile
+        // Optional: Share
         if (navigator.share) {
-            const file = new File([pdfBlob], name, { type: 'application/pdf' })
-            await navigator.share({
-                title: 'Invoice',
-                text: 'Here is your invoice',
-                files: [file]
-            })
+            const file = new File([blob], name, { type: 'application/pdf' })
+            await navigator.share({ title: 'Invoice', text: 'Here is your invoice', files: [file] })
         }
+
+        // 5) Cleanup
+        document.body.removeChild(wrapper)
     } catch (err) {
         console.error('PDF generation error:', err)
     }
@@ -149,6 +188,7 @@ const share = async () => {
         <!---->
         <div
             ref="pdfContent"
+            id="pdfContent"
             class="min-w-180 w-180 md:scale-100 mx-auto p-6 text-sm z-20 relative print:scale-100 responsive-scale"
             :style="{
                 transformOrigin: 'top left',
