@@ -4,7 +4,9 @@ import Checkbox from '@/components/ui/checkbox/Checkbox.vue'
 import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
 import { useCompanyStore } from '@/stores/companyStore'
 import { useInvoiceStore } from '@/stores/InvoiceStore'
-import { ArrowLeftIcon, CheckSquare, FileIcon } from 'lucide-vue-next'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
+import { ArrowLeftIcon, CheckSquare, FileIcon, Share2Icon, ShareIcon } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
@@ -12,6 +14,7 @@ import { RouterLink, useRoute } from 'vue-router'
 const route = useRoute()
 const invoices = useInvoiceStore()
 const companyStore = useCompanyStore()
+const pdfContent = ref(null)
 
 const { invoice, fetching } = storeToRefs(invoices)
 const { company } = storeToRefs(companyStore)
@@ -58,6 +61,49 @@ const formatDate = (timestamp?: number): string => {
 const print = () => {
     window.print()
 }
+
+const share = async () => {
+    try {
+        // 1. Capture the div as canvas
+        const element = pdfContent.value
+
+        if (!element) return
+
+        const canvas = await html2canvas(element, { scale: 2 })
+        const imgData = canvas.toDataURL('image/png')
+
+        // 2. Create PDF
+        const pdf = new jsPDF('p', 'mm', 'a4')
+        const pageWidth = pdf.internal.pageSize.getWidth()
+        //const pageHeight = pdf.internal.pageSize.getHeight();
+
+        // Scale image to fit page
+        const imgProps = pdf.getImageProperties(imgData)
+        const ratio = imgProps.width / imgProps.height
+        const pdfWidth = pageWidth
+        const pdfHeight = pageWidth / ratio
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+
+        // 3a. Trigger download
+        const name = `${invoice.value?.code}.pdf`
+        pdf.save(name)
+
+        // 3b. Optionally share on mobile (if supported)
+        if (navigator.share) {
+            const pdfBlob = pdf.output('blob')
+            const file = new File([pdfBlob], 'invoice.pdf', { type: 'application/pdf' })
+
+            await navigator.share({
+                title: 'Invoice #123',
+                text: 'Here is your invoice',
+                files: [file]
+            })
+        }
+    } catch (err) {
+        console.error('PDF generation error:', err)
+    }
+}
 </script>
 <template>
     <div class="flex flex-col items-center mx-auto print:max-h-screen print:overflow-hidden w-full">
@@ -74,6 +120,10 @@ const print = () => {
             <Button variant="ghost" @click="print" class="print:hidden">
                 <FileIcon /> <span>Download</span>
             </Button>
+
+            <Button variant="ghost" @click="share" class="print:hidden">
+                <Share2Icon /> <span>Share</span>
+            </Button>
         </div>
 
         <div class="fetching" v-if="fetching && !invoice">
@@ -82,6 +132,7 @@ const print = () => {
 
         <!---->
         <div
+            ref="pdfContent"
             class="min-w-180 w-180 md:scale-100 mx-auto p-6 text-sm z-20 relative print:scale-100 responsive-scale"
             :style="{
                 transformOrigin: 'top left',

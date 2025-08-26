@@ -29,6 +29,8 @@
     "firebase": "^11.9.1",
     "firebase-admin": "^13.4.0",
     "flagsmith": "^9.3.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
     "lucide-vue-next": "^0.514.0",
     "pinia": "^3.0.1",
     "reka-ui": "^2.3.2",
