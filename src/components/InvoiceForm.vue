@@ -221,7 +221,21 @@ const onSubmit = handleSubmit((data) => {
 
         <FormField v-slot="{ value, handleChange }" name="materials">
             <FormItem class="flex flex-col items-start space-x-3 space-y-0 mt-3">
-                <FormLabel>Include Materials</FormLabel>
+                <FormLabel>Include Materials to:</FormLabel>
+
+                <select
+                    name="materials"
+                    id="materials"
+                    :value="value"
+                    class="border px-3 py-2 rounded shadow-xs w-full min-w-10"
+                    :onchange="handleChange"
+                    placeholder="include materials"
+                >
+                    <option :value="true">Client</option>
+                    <option :value="false">Company</option>
+                </select>
+
+                <!--
                 <FormControl class="flex flex-row gap-2 items-center">
                     <div>
                         <Checkbox :model-value="value" @update:model-value="handleChange" />
@@ -230,7 +244,9 @@ const onSubmit = handleSubmit((data) => {
                             to the client</FormDescription
                         >
                     </div>
-                </FormControl>
+
+
+                </FormControl> -->
             </FormItem>
         </FormField>
 
