@@ -236,7 +236,7 @@ const onSubmit = handleSubmit((data) => {
 
         <div class="flex gap-4 pt-4 sticky botom-0 left-0">
             <Button type="submit"
-                >Submit Invoice
+                >Save
                 <LoadingSpinner class="ml-2" v-if="loading" />
             </Button>
             <Button type="button" variant="outline" @click="handleReset">Reset</Button>
