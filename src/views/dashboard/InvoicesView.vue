@@ -105,7 +105,7 @@ const isNotPrintview = computed(() => {
             <Dialog :open="dialogOpen" @update:open="(o) => (dialogOpen = o)">
                 <DialogContent class="w-full md:max-w-3xl overflow-auto">
                     <DialogHeader>
-                        <DialogTitle> New Invoice </DialogTitle>
+                        <DialogTitle> Nuevo Invoice </DialogTitle>
                         <DialogDescription>
                             <p v-if="companyStore.company">
                                 Fill the folowing form to create a new user
