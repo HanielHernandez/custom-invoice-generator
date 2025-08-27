@@ -249,7 +249,7 @@ const share = async () => {
                         <p class="font-bold">Client Name: {{ invoice.customerName }}</p>
                         <p><b>Address:</b> {{ invoice.customerAddres }}</p>
                         <p>
-                            <b>City, State, Zip:</b> {{ invoice.city }}, {{ invoice.state }}
+                            <b>City, State, Zip:</b>
                             {{ invoice.zip }}
                         </p>
                         <p><b>Phone:</b> {{ invoice.phone }}</p>

@@ -2,14 +2,7 @@
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { toTypedSchema } from '@vee-validate/zod'
-import {
-    FormField,
-    FormItem,
-    FormLabel,
-    FormControl,
-    FormMessage,
-    FormDescription
-} from '@/components/ui/form'
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import Input from './ui/input/Input.vue'
 import Textarea from './ui/textarea/Textarea.vue'
 import Button from './ui/button/Button.vue'
@@ -18,7 +11,7 @@ import Checkbox from './ui/checkbox/Checkbox.vue'
 import type { Company } from '@/types/company'
 import type { Invoice } from '@/types/invoice'
 import LoadingSpinner from './ui/LoadingSpinner.vue'
-import { HamburgerIcon, MenuIcon, StoreIcon } from 'lucide-vue-next'
+import { MenuIcon, StoreIcon } from 'lucide-vue-next'
 
 const {
     company,
@@ -40,8 +33,8 @@ const invoiceSchema = z.object({
     stimates: z.string().min(1, 'Estimate is required'),
     customerName: z.string().min(1, 'Customer name is required'),
     customerAddres: z.string().min(1, 'Address is required'),
-    city: z.string().min(1, 'City is required'),
-    state: z.string().min(1, 'State is required'),
+    // city: z.string().min(1, 'City is required'),
+    // state: z.string().min(1, 'State is required'),
     zip: z.string().min(1, 'ZIP is required'),
     phone: z.string().min(1, 'Phone is required'),
     total: z.number().min(1, 'Total is required'),
@@ -104,35 +97,15 @@ const onSubmit = handleSubmit((data) => {
             </FormItem>
         </FormField>
 
-        <div class="grid grid-cols-3 gap-4">
-            <FormField v-slot="{ componentField }" name="city">
-                <FormItem>
-                    <FormLabel>City</FormLabel>
-                    <FormControl>
-                        <Input v-bind="componentField" placeholder="Enter city" />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-            </FormField>
-            <FormField v-slot="{ componentField }" name="state">
-                <FormItem>
-                    <FormLabel>State</FormLabel>
-                    <FormControl>
-                        <Input v-bind="componentField" placeholder="Enter state" />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-            </FormField>
-            <FormField v-slot="{ componentField }" name="zip">
-                <FormItem>
-                    <FormLabel>ZIP</FormLabel>
-                    <FormControl>
-                        <Input v-bind="componentField" placeholder="Enter ZIP code" />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-            </FormField>
-        </div>
+        <FormField v-slot="{ componentField }" name="zip">
+            <FormItem>
+                <FormLabel>City, State, ZIP</FormLabel>
+                <FormControl>
+                    <Input v-bind="componentField" placeholder="Enter ZIP and city" />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+        </FormField>
 
         <FormField v-slot="{ componentField }" name="phone">
             <FormItem>
