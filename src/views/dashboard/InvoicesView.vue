@@ -13,7 +13,7 @@ import { useInvoiceStore } from '@/stores/InvoiceStore'
 import type { Invoice } from '@/types/invoice'
 import { PlusIcon, RefreshCcw } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, h, onMounted, ref, watch } from 'vue'
 import * as instantsearch from 'vue-instantsearch/vue3/es'
 import { useRoute, useRouter } from 'vue-router'
 import { toast, Toaster } from 'vue-sonner'
@@ -60,12 +60,17 @@ const onFormSave = async (values: Invoice) => {
 
         setTimeout(() => {
             router.go(0)
-        }, 1000)
+        }, 5000)
 
-        toast('Invoice created succesfully', {
+        toast.success('Invoice creado Exitosamente', {
             position: 'top-center',
-            description: 'your invoice hast been save successfully',
+            richColors: true,
+            description: 'Su invoice ha sido guardado correctamente',
             closeButton: true,
+            action: {
+                label: 'Aceptar',
+                onClick: () => router.go(0)
+            },
             onDismiss: () => {
                 router.go(0)
             }
@@ -100,9 +105,11 @@ const reload = () => {
             <div class="flex flex-col md:flex-row gap-4 md:justify-between" v-if="isNotPrintview">
                 <at-text variant="h2"> Invoices </at-text>
                 <div class="flex gap-4">
-                    <Button color="primary" @click="reload"> Recargar <RefreshCcw /> </Button>
+                    <Button color="primary" @click="reload">
+                        <RefreshCcw class="size-4" /> Recargar</Button
+                    >
                     <Button @click="dialogOpen = true">
-                        <PlusIcon class="h-4 w-4" /> Nuevo Invoice
+                        <PlusIcon class="size-4" /> Nuevo Invoice
                     </Button>
                 </div>
             </div>

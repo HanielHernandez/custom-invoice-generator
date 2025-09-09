@@ -29,10 +29,14 @@ const onFormSave = async (payloadInvocie: Invoice) => {
     console.log(invoice.value)
     await invoices.update(invoice.value.objectID, payloadInvocie)
 
-    toast('Invoice updated succesfully', {
+    toast.success('Invoice actualizado Exitosamente', {
         position: 'top-center',
-        description: 'Invoice was successuflly updated reload to refresh the page',
+        description: 'Su Invoice ha sido actualizado exitosamente',
         closeButton: true,
+        action: {
+            label: 'Aceptar',
+            onClick: () => router.go(0)
+        },
         onDismiss: () => {
             router.push('/')
         }

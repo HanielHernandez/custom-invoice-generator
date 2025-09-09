@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { auth } from './lib/firebase';
-import { useAuthStore } from './stores/authStore';
-import { Toaster } from 'vue-sonner';
+import { onMounted } from 'vue'
+import { auth } from './lib/firebase'
+import { useAuthStore } from './stores/authStore'
+import { Toaster } from 'vue-sonner'
 import 'vue-sonner/style.css'
 
 const authStore = useAuthStore()
@@ -12,15 +12,13 @@ onMounted(() => {
         authStore.setUser(auth.currentUser)
     }
 })
-
 </script>
 
 <template>
     <main class="h-screen overflow-auto">
-        <Toaster class="pointer-events-auto" />
+        <Toaster class="pointer-events-auto" rich-colors />
 
         <RouterView />
-
     </main>
 </template>
 
