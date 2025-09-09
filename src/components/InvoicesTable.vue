@@ -15,7 +15,15 @@ import Input from './ui/input/Input.vue'
 import { computed, ref, useTemplateRef } from 'vue'
 import CardFooter from './ui/card/CardFooter.vue'
 import { Button } from './ui/button'
-import { ChevronLeft, ChevronRight, EditIcon, EyeIcon, SearchIcon, Trash } from 'lucide-vue-next'
+import {
+    ChevronLeft,
+    ChevronRight,
+    EditIcon,
+    EyeIcon,
+    RefreshCcw,
+    SearchIcon,
+    Trash
+} from 'lucide-vue-next'
 import dayjs from 'dayjs'
 import InvoIceDeleteDialog from './InvoIceDeleteDialog.vue'
 import { useInvoiceStore } from '@/stores/InvoiceStore'
@@ -174,6 +182,7 @@ const columns = [
                 </div>
             </template>
         </ais-search-box>
+
         <Card>
             <CardHeader class="hidden flex-col md:flex-row justify-between">
                 <div class="mb-4 md:mb-0">
