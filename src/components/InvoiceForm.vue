@@ -33,24 +33,41 @@ const invoiceSchema = z.object({
     stimates: z.string().min(1, 'Estimate is required'),
     customerName: z.string().min(1, 'Customer name is required'),
     customerAddres: z.string().min(1, 'Address is required'),
-    // city: z.string().min(1, 'City is required'),
-    // state: z.string().min(1, 'State is required'),
     zip: z.string().min(1, 'ZIP is required'),
     phone: z.string().min(1, 'Phone is required'),
-    total: z.number().min(1, 'Total is required'),
+    total: z.string().optional(),
     description: z.string(),
     services: z.array(z.string()),
     materials: z.boolean().optional()
 })
 
-const { handleSubmit, handleReset } = useForm({
+// Tipo inferido desde el esquema
+export type InvoiceFormValues = z.infer<typeof invoiceSchema>
+
+const { handleSubmit, handleReset } = useForm<InvoiceFormValues>({
     validationSchema: toTypedSchema(invoiceSchema),
-    initialValues: invoice ? invoice : { services: [], materials: false }
+    initialValues: invoice
+        ? {
+              ...invoice,
+              total: invoice.total !== undefined ? String(invoice.total) : undefined
+          }
+        : { services: [], materials: false }
 })
 
-const onSubmit = handleSubmit((data) => {
-    emit('onSave', data as Invoice)
+const onSubmit = handleSubmit((data: InvoiceFormValues) => {
+    emit('onSave', data as unknown as Invoice)
 })
+
+// Helper: suma una expresión con +
+function sumPlusSeparated(expr: string): number {
+    if (!expr) return 0
+    return expr
+        .split('+')
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0)
+        .map((p) => Number(p.replace(/,/g, '.')) || 0)
+        .reduce((a, b) => a + b, 0)
+}
 </script>
 
 <template>
@@ -121,8 +138,18 @@ const onSubmit = handleSubmit((data) => {
             <FormItem>
                 <FormLabel>Total</FormLabel>
                 <FormControl>
-                    <Input type="number" v-bind="componentField" placeholder="Enter total amount" />
+                    <Input
+                        v-bind="componentField"
+                        type="text"
+                        placeholder="Enter total amount or expression (e.g. 10+20+30)"
+                        @blur="
+                            componentField.onChange(
+                                String(sumPlusSeparated(String(componentField.modelValue)))
+                            )
+                        "
+                    />
                 </FormControl>
+                <FormDescription>Puede escribir una suma: 100+250+30</FormDescription>
                 <FormMessage />
             </FormItem>
         </FormField>
