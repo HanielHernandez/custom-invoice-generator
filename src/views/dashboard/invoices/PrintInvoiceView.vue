@@ -162,9 +162,9 @@ const share = async () => {
 </script>
 <template>
     <div class="flex flex-col items-center mx-auto print:max-h-screen print:overflow-hidden w-full">
-        <div class="flex flex-row w-full items-center justify-center text-center mb-4">
+        <div class="flex flex-row w-full gap-4 items-center justify-center text-center mb-4">
             <Button
-                variant="ghost"
+                variant="secondary"
                 :as="RouterLink"
                 :to="`/dashboard/invoices/`"
                 class="print:hidden"
@@ -172,11 +172,11 @@ const share = async () => {
                 <ArrowLeftIcon /> Go Back
             </Button>
 
-            <Button variant="ghost" @click="print" class="print:hidden">
+            <Button variant="success" color="" @click="print" class="print:hidden">
                 <FileIcon /> <span>Download</span>
             </Button>
 
-            <Button variant="ghost" @click="share" class="print:hidden">
+            <Button variant="default" @click="share" class="print:hidden">
                 <Share2Icon /> <span>Share</span>
             </Button>
         </div>

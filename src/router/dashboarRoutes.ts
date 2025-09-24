@@ -26,6 +26,15 @@ export const dashboardRoutes = [
         },
         children: [
             {
+                path: 'new',
+                name: 'new Invoice',
+                component: () => import('../views/dashboard/invoices/CreateInvoiceView.vue'),
+                meta: {
+                    requiresAuth: true
+                }
+            },
+
+            {
                 path: '',
                 name: 'invoices-list',
                 component: () => import('../views/dashboard/invoices/InvoicesList.vue'),
