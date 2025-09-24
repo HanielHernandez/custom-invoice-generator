@@ -62,7 +62,7 @@ const onSubmit = handleSubmit((data: InvoiceFormValues) => {
 function sumPlusSeparated(expr: string): number {
     if (!expr) return 0
     return expr
-        .split('+')
+        .split(/[+,]/) // ahora separa por + y por coma
         .map((p) => p.trim())
         .filter((p) => p.length > 0)
         .map((p) => Number(p.replace(/,/g, '.')) || 0)
