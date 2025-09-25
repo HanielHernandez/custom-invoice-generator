@@ -57,17 +57,6 @@ const { handleSubmit, handleReset } = useForm<InvoiceFormValues>({
 const onSubmit = handleSubmit((data: InvoiceFormValues) => {
     emit('onSave', data as unknown as Invoice)
 })
-
-// Helper: suma una expresión con +
-function sumPlusSeparated(expr: string): number {
-    if (!expr) return 0
-    return expr
-        .split(/[+,]/) // ahora separa por + y por coma
-        .map((p) => p.trim())
-        .filter((p) => p.length > 0)
-        .map((p) => Number(p.replace(/,/g, '.')) || 0)
-        .reduce((a, b) => a + b, 0)
-}
 </script>
 
 <template>
@@ -138,22 +127,11 @@ function sumPlusSeparated(expr: string): number {
             <FormItem>
                 <FormLabel>Total</FormLabel>
                 <FormControl>
-                    <Input
-                        v-bind="componentField"
-                        type="text"
-                        placeholder="Enter total amount or expression (e.g. 10+20+30)"
-                        @blur="
-                            componentField.onChange(
-                                String(sumPlusSeparated(String(componentField.modelValue)))
-                            )
-                        "
-                    />
+                    <Input v-bind="componentField" type="text" placeholder="Enter total amount" />
                 </FormControl>
-                <FormDescription>Puede escribir una suma: 100+250+30</FormDescription>
                 <FormMessage />
             </FormItem>
         </FormField>
-
         <FormField v-slot="{ componentField }" name="description">
             <FormItem>
                 <FormLabel>Description</FormLabel>
