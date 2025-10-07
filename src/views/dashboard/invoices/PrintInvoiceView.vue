@@ -212,7 +212,7 @@ const share = async () => {
                         :src="logoBase64"
                         crossorigin="anonymous"
                         alt="Company Logo"
-                        class="h-20 w-auto mb-2"
+                        class="h-30 w-30 object-contain mb-2"
                     />
 
                     <div class="text-right">
