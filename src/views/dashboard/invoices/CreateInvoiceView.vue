@@ -36,7 +36,7 @@ const onFormSave = async (values: Invoice) => {
     }
 
     try {
-        await invoicesStore.create({
+        const id = await invoicesStore.create({
             ...values,
             code: generateInvoiceCode('INV'),
             company: company.value,
@@ -48,10 +48,6 @@ const onFormSave = async (values: Invoice) => {
 
         dialogOpen.value = false
 
-        setTimeout(() => {
-            router.go(0)
-        }, 5000)
-
         toast.success('Invoice creado Exitosamente', {
             position: 'top-center',
             richColors: true,
@@ -59,10 +55,17 @@ const onFormSave = async (values: Invoice) => {
             closeButton: true,
             action: {
                 label: 'Aceptar',
-                onClick: () => router.go(-1)
+                onClick: () =>
+                    router.push({
+                        name: 'print-invoice',
+                        params: { id }
+                    })
             },
             onDismiss: () => {
-                router.go(-1)
+                router.push({
+                    name: 'print-invoice',
+                    params: { id }
+                })
             }
         })
     } catch (e) {

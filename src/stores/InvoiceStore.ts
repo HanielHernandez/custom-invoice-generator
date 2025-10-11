@@ -32,13 +32,15 @@ export const useInvoiceStore = defineStore('invoices', () => {
 
     const invoice = ref<Invoice | null>(null)
 
-    const create = async (payloadInvoice: Invoice) => {
+    const create = async (payloadInvoice: Invoice): Promise<string | null> => {
         loading.value = true
         try {
-            await addDoc(collection(db, 'invoices'), payloadInvoice)
+            const { id } = await addDoc(collection(db, 'invoices'), payloadInvoice)
+            return id
         } catch (e) {
             console.error(e)
             alert('Error saving invoice')
+            return null
         } finally {
             loading.value = false
         }
@@ -46,6 +48,7 @@ export const useInvoiceStore = defineStore('invoices', () => {
 
     const find = async (id: string) => {
         fetching.value = true
+        invoice.value = null
         try {
             const docSnap = await getDoc(doc(db, 'invoices', id))
             invoice.value = docSnap.exists()
