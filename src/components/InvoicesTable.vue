@@ -15,15 +15,7 @@ import Input from './ui/input/Input.vue'
 import { computed, ref, useTemplateRef } from 'vue'
 import CardFooter from './ui/card/CardFooter.vue'
 import { Button } from './ui/button'
-import {
-    ChevronLeft,
-    ChevronRight,
-    EditIcon,
-    EyeIcon,
-    RefreshCcw,
-    SearchIcon,
-    Trash
-} from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, EditIcon, EyeIcon, SearchIcon, Trash } from 'lucide-vue-next'
 import dayjs from 'dayjs'
 import InvoIceDeleteDialog from './InvoIceDeleteDialog.vue'
 import { useInvoiceStore } from '@/stores/InvoiceStore'
@@ -103,9 +95,9 @@ const sortByOptions = [
     }
 ]
 
-const format = (tiemstamp: number) => dayjs(new Date(tiemstamp)).format('DD/MM/YYYY')
+const format = (tiemstamp: number) => dayjs(new Date(tiemstamp)).format('MM/DD/YYYY')
 const changeSort = (value: string) => {
-    console.log(sortBy)
+    console.log(value)
     // const sortByEl: HTMLSelectElement | null = document.querySelector('.ais-SortBy-select')
     // if (!sortByEl) {
     //     return

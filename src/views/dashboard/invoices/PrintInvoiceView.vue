@@ -8,6 +8,7 @@ import { storeToRefs } from 'pinia'
 import { onMounted, ref, watch, computed, onUnmounted, nextTick } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import html2pdf from 'html2pdf.js'
+import dayjs from 'dayjs'
 
 const route = useRoute()
 const logoBase64 = ref('')
@@ -55,8 +56,8 @@ watch(company, async () => {
 })
 
 const formatDate = (timestamp?: number): string => {
-    if (!timestamp) return new Date().toLocaleDateString()
-    return new Date(timestamp).toLocaleDateString()
+    const date = timestamp ? new Date(timestamp) : new Date()
+    return dayjs(date).format('MM/DD/YYYY')
 }
 
 const print = () => {
