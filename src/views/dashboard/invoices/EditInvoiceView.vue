@@ -35,10 +35,17 @@ const onFormSave = async (payloadInvocie: Invoice) => {
         closeButton: true,
         action: {
             label: 'Aceptar',
-            onClick: () => router.go(0)
+            onClick: () =>
+                router.push({
+                    name: 'print-invoice',
+                    params: { id: route.params.id }
+                })
         },
         onDismiss: () => {
-            router.push('/')
+            router.push({
+                name: 'print-invoice',
+                params: { id: route.params.id }
+            })
         }
     })
 }
