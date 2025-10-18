@@ -28,20 +28,28 @@ const onFormSave = async (payloadInvocie: Invoice) => {
     if (!invoice.value) return
     console.log(invoice.value)
     await invoices.update(invoice.value.objectID, payloadInvocie)
-
+    const timeout = setTimeout(() => {
+        router.push({
+            name: 'print-invoice',
+            params: { id: route.params.id }
+        })
+    }, 2500)
     toast.success('Invoice actualizado Exitosamente', {
         position: 'top-center',
         description: 'Su Invoice ha sido actualizado exitosamente',
         closeButton: true,
         action: {
             label: 'Aceptar',
-            onClick: () =>
+            onClick: () => {
+                clearTimeout(timeout)
                 router.push({
                     name: 'print-invoice',
                     params: { id: route.params.id }
                 })
+            }
         },
         onDismiss: () => {
+            clearTimeout(timeout)
             router.push({
                 name: 'print-invoice',
                 params: { id: route.params.id }

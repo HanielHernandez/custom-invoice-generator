@@ -2,7 +2,7 @@
 import { onMounted } from 'vue'
 import { auth } from './lib/firebase'
 import { useAuthStore } from './stores/authStore'
-import { Toaster } from 'vue-sonner'
+// import { Toaster } from 'vue-sonner'
 import 'vue-sonner/style.css'
 
 const authStore = useAuthStore()
@@ -16,7 +16,7 @@ onMounted(() => {
 
 <template>
     <main class="h-screen overflow-auto">
-        <Toaster class="pointer-events-auto" rich-colors />
+        <!-- <Toaster class="pointer-events-auto" rich-colors /> -->
 
         <RouterView />
     </main>
