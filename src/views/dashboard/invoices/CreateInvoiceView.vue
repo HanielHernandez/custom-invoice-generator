@@ -47,6 +47,12 @@ const onFormSave = async (values: Invoice) => {
         })
 
         dialogOpen.value = false
+        const timeout = setTimeout(() => {
+            router.push({
+                name: 'print-invoice',
+                params: { id }
+            })
+        }, 2500)
 
         toast.success('Invoice creado Exitosamente', {
             position: 'top-center',
@@ -55,13 +61,16 @@ const onFormSave = async (values: Invoice) => {
             closeButton: true,
             action: {
                 label: 'Aceptar',
-                onClick: () =>
+                onClick: () => {
+                    clearTimeout(timeout)
                     router.push({
                         name: 'print-invoice',
                         params: { id }
                     })
+                }
             },
             onDismiss: () => {
+                clearTimeout(timeout)
                 router.push({
                     name: 'print-invoice',
                     params: { id }
