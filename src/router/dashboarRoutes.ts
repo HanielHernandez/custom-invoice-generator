@@ -67,5 +67,14 @@ export const dashboardRoutes = [
         meta: {
             requiresAuth: true
         }
+    },
+    {
+        path: 'clients',
+        name: 'clients',
+        component: () => import('../views/dashboard/ClientsView.vue'),
+        meta: {
+            requiresAuth: true,
+            requiresClientsFlag: true
+        }
     }
 ]
