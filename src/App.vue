@@ -2,15 +2,19 @@
 import { onMounted } from 'vue'
 import { auth } from './lib/firebase'
 import { useAuthStore } from './stores/authStore'
+import { useFlagsmith } from './composables/useFlagsmith'
 // import { Toaster } from 'vue-sonner'
 import 'vue-sonner/style.css'
 
 const authStore = useAuthStore()
+const { getFlagsmith } = useFlagsmith()
 
-onMounted(() => {
+onMounted(async () => {
     if (auth.currentUser) {
         authStore.setUser(auth.currentUser)
     }
+
+    await getFlagsmith()
 })
 </script>
 

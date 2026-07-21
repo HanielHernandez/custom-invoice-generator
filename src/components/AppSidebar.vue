@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/sidebar'
 import {
     ChevronsUpDown,
+    ContactIcon,
     HomeIcon,
     LogOut,
     ScrollTextIcon,
@@ -21,6 +22,7 @@ import {
 } from 'lucide-vue-next'
 import SidebarMenu from './ui/sidebar/SidebarMenu.vue'
 import { useRole, type Role } from '@/composable/useRole'
+import { useFlagsmith } from '@/composables/useFlagsmith'
 import { computed, watch } from 'vue'
 import { auth } from '@/lib/firebase'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
@@ -39,9 +41,15 @@ type MenuItem = {
     url: string
     icon: unknown
     role: Role
+    requiresClientsFlag?: boolean
 }
 const authStore = useAuthStore()
 const router = useRouter()
+const { clients, getFlagsmith } = useFlagsmith()
+
+getFlagsmith()
+
+const showClients = computed(() => clients.value)
 
 const user = computed(() => {
     return auth.currentUser
@@ -60,7 +68,13 @@ const menuItems: MenuItem[] = [
         url: '/dashboard/users',
         role: 'admin'
     },
-
+    {
+        name: 'Clients',
+        icon: ContactIcon,
+        url: '/dashboard/clients',
+        role: 'any',
+        requiresClientsFlag: true
+    },
     {
         name: 'Company',
         icon: StoreIcon,
@@ -73,7 +87,10 @@ const { role } = useRole()
 
 const availableItems = computed(() => {
     if (role == null) return []
-    return menuItems.filter((x) => (x.role == 'any' ? true : x.role == role.value))
+    return menuItems.filter((x) => {
+        if (x.requiresClientsFlag && !showClients.value) return false
+        return x.role == 'any' ? true : x.role == role.value
+    })
 })
 
 const onLogOutClick = async () => {
