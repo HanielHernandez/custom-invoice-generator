@@ -1,5 +1,7 @@
 import axios from 'axios'
 
+export type PlanId = 'free' | 'monthly'
+
 export type User = {
     email: string | null
     password?: string
@@ -8,11 +10,12 @@ export type User = {
 }
 
 export type UserProfile = User & {
-    createdAt: string
-    veifiedAt: string
+    createdAt: string | number
+    veifiedAt: string | number
     name: string
     role: string
     uid: string
+    planId: PlanId
 }
 
 const FUNCTIONS_URL = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL

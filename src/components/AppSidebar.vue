@@ -23,8 +23,8 @@ import {
 import SidebarMenu from './ui/sidebar/SidebarMenu.vue'
 import { useRole, type Role } from '@/composable/useRole'
 import { useFlagsmith } from '@/composables/useFlagsmith'
+import { storeToRefs } from 'pinia'
 import { computed, watch } from 'vue'
-import { auth } from '@/lib/firebase'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import {
     DropdownMenu,
@@ -44,16 +44,13 @@ type MenuItem = {
     requiresClientsFlag?: boolean
 }
 const authStore = useAuthStore()
+const { user } = storeToRefs(authStore)
 const router = useRouter()
 const { clients, getFlagsmith } = useFlagsmith()
 
 getFlagsmith()
 
 const showClients = computed(() => clients.value)
-
-const user = computed(() => {
-    return auth.currentUser
-})
 
 const menuItems: MenuItem[] = [
     {

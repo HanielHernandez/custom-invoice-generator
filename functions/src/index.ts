@@ -1,6 +1,7 @@
 import { onRequest } from 'firebase-functions/v2/https'
 import { initializeApp, getApps } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
+import { getFirestore } from 'firebase-admin/firestore'
 import * as dotenv from 'dotenv'
 
 dotenv.config()
@@ -70,7 +71,7 @@ export const createCustomerUser = onRequest(async (req, res: any) => {
         return res.status(405).send('Method Not Allowed')
     }
 
-    const { email, password, authToken } = req.body
+    const { email, password, authToken, name, phoneNumber } = req.body
 
     if (!email || !password) {
         return res.status(400).send('Missing email or password')
@@ -98,15 +99,39 @@ export const createCustomerUser = onRequest(async (req, res: any) => {
         }
 
         // ✅ Create user
-        const user = await auth.createUser({ email, password })
+        const user = await auth.createUser({
+            email,
+            password,
+            displayName: name || undefined,
+            phoneNumber: phoneNumber || undefined
+        })
 
-        // ✅ Set admin claim
+        // ✅ Editor role for customer accounts
         await auth.setCustomUserClaims(user.uid, { role: 'editor' })
 
+        const db = getFirestore()
+        const displayName = name || email.split('@')[0]
+        const photoUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}`
+
+        await db
+            .collection('profiles')
+            .doc(user.uid)
+            .set({
+                uid: user.uid,
+                name: displayName,
+                email,
+                phoneNumber: phoneNumber || null,
+                photoUrl,
+                role: 'editor',
+                planId: 'free',
+                createdAt: Date.now(),
+                veifiedAt: ''
+            })
+
         return res.status(201).json({
-            message: `✅ Admin user created: ${user.uid}`,
-            // uid: user.uid,
-            ...user
+            message: `✅ Editor user created: ${user.uid}`,
+            uid: user.uid,
+            role: 'editor'
         })
     } catch (err: any) {
         console.error('❌ Error:', err)

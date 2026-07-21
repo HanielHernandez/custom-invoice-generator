@@ -43,7 +43,7 @@ const onCancel = () => {
 const onContinue = () => {
     if (props.loading) return
     if (!props.objectId) {
-        console.error('Error deleting client: missing Algolia objectID', props.objectId)
+        console.error('Error deleting client: missing client id', props.objectId)
         return
     }
     emit('onContinue', props.objectId)
@@ -88,7 +88,7 @@ const onInteractOutside = (event: Event) => {
                     Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
-                    class="bg-destructive text-destructive-foreground hover:bg-destructive/90 min-w-28"
+                    class="bg-destructive text-white hover:bg-destructive/90 min-w-28"
                     :class="{ 'animate-pulse': loading }"
                     :disabled="loading"
                     @click.prevent="onContinue"

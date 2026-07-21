@@ -51,7 +51,7 @@ const onSubmit = handleSubmit(async (values) => {
     error.value = null
     try {
         if (isEditing.value && props.client?.id) {
-            await clientsStore.update(props.client.id, values)
+            await clientsStore.update(props.client.id, values, props.client)
         } else {
             await clientsStore.create(values)
         }

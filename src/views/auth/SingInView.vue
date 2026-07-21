@@ -106,6 +106,16 @@ const onSubmit = handleSubmit(async ({ email, password }) => {
                             v-if="isSubmitting"> </span>
                     </Button>
 
+                    <p class="text-center text-sm">
+                        Don't have an account?
+                        <router-link
+                            to="/auth/signup"
+                            class="font-medium text-blue-500 hover:text-blue-600"
+                        >
+                            Sign Up
+                        </router-link>
+                    </p>
+
                 </form>
             </CardContent>
 

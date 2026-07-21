@@ -9,12 +9,10 @@ import DialogTitle from '@/components/ui/dialog/DialogTitle.vue'
 import type { Client } from '@/types/client'
 import { PlusIcon } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { Toaster } from 'vue-sonner'
 
 const dialogOpen = ref(false)
 const editingClient = ref<Client | null>(null)
-const router = useRouter()
 
 const isEditing = computed(() => Boolean(editingClient.value?.id))
 
@@ -35,7 +33,6 @@ const closeDialog = () => {
 
 const onFormSave = () => {
     closeDialog()
-    setTimeout(() => router.go(0), 800)
 }
 </script>
 

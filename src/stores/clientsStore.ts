@@ -19,14 +19,14 @@ export type CreateClientPayload = Omit<
     'id' | 'uid' | 'companyId' | 'createdAt' | 'updatedAt' | 'deleted' | 'deletedAt'
 >
 
+const isActiveClient = (client: Client) => !client.deleted && client.deletedAt == null
+
 export const useClientsStore = defineStore('clients', () => {
     const items = ref<Client[]>([])
-    const cachedClients = ref<Client[]>([])
     const loading = ref(false)
     const saving = ref(false)
     const error = ref<string | null>(null)
-    const perPage = ref(10)
-    const endReach = ref(false)
+    const loaded = ref(false)
 
     const getUserCompanyId = async () => {
         const companyStore = useCompanyStore()
@@ -43,41 +43,37 @@ export const useClientsStore = defineStore('clients', () => {
         return companyId
     }
 
-    const fetch = async (pageLimit = 10) => {
+    const fetch = async (force = false) => {
         const user = auth.currentUser
         if (!user) {
             error.value = 'User not authenticated'
             return
         }
 
+        if (loaded.value && !force) return
+
         try {
-            perPage.value = pageLimit
             loading.value = true
             error.value = null
 
-            // Equality-only query — no composite index required.
-            // Sort + paginate on the client.
-            if (cachedClients.value.length === 0 && !endReach.value) {
-                const q = query(collection(db, 'clients'), where('uid', '==', user.uid))
-                const snap = await getDocs(q)
+            const tokenResult = await user.getIdTokenResult()
+            const role = tokenResult.claims.role
+            const clientsQuery =
+                role === 'admin'
+                    ? query(collection(db, 'clients'))
+                    : query(collection(db, 'clients'), where('uid', '==', user.uid))
 
-                cachedClients.value = snap.docs
-                    .map((docSnap) => ({
-                        ...(docSnap.data() as Client),
-                        id: docSnap.id
-                    }))
-                    .filter((client) => !client.deleted && client.deletedAt == null)
-                    .sort((a, b) => b.createdAt - a.createdAt)
-            }
+            const snap = await getDocs(clientsQuery)
 
-            const start = items.value.length
-            const nextPage = cachedClients.value.slice(start, start + perPage.value)
+            items.value = snap.docs
+                .map((docSnap) => ({
+                    ...(docSnap.data() as Client),
+                    id: docSnap.id
+                }))
+                .filter(isActiveClient)
+                .sort((a, b) => b.createdAt - a.createdAt)
 
-            items.value = [...items.value, ...nextPage]
-
-            if (items.value.length >= cachedClients.value.length) {
-                endReach.value = true
-            }
+            loaded.value = true
         } catch (e) {
             console.error(e)
             error.value = e instanceof Error ? e.message : 'Error fetching clients'
@@ -87,10 +83,9 @@ export const useClientsStore = defineStore('clients', () => {
     }
 
     const reset = () => {
-        endReach.value = false
         items.value = []
-        cachedClients.value = []
         error.value = null
+        loaded.value = false
     }
 
     const create = async (payload: CreateClientPayload) => {
@@ -113,25 +108,36 @@ export const useClientsStore = defineStore('clients', () => {
             const { id } = await addDoc(collection(db, 'clients'), client)
             const created = { ...client, id }
             items.value = [created, ...items.value]
-            cachedClients.value = [created, ...cachedClients.value]
             return id
         } finally {
             saving.value = false
         }
     }
 
-    const update = async (id: string, payload: CreateClientPayload) => {
+    const update = async (id: string, payload: CreateClientPayload, existing?: Client) => {
         saving.value = true
         try {
             const updatedAt = Date.now()
             await updateDoc(doc(db, 'clients', id), { ...payload, updatedAt })
             const patch = { ...payload, updatedAt }
-            items.value = items.value.map((client) =>
-                client.id === id ? { ...client, ...patch } : client
-            )
-            cachedClients.value = cachedClients.value.map((client) =>
-                client.id === id ? { ...client, ...patch } : client
-            )
+            const base = items.value.find((client) => client.id === id) ?? existing
+
+            const patched: Client = {
+                ...(base ?? {
+                    id,
+                    uid: '',
+                    companyId: '',
+                    createdAt: updatedAt,
+                    deleted: false,
+                    deletedAt: null
+                }),
+                ...patch,
+                id
+            }
+
+            items.value = items.value.some((client) => client.id === id)
+                ? items.value.map((client) => (client.id === id ? patched : client))
+                : [patched, ...items.value]
         } finally {
             saving.value = false
         }
@@ -146,7 +152,6 @@ export const useClientsStore = defineStore('clients', () => {
         try {
             await deleteDoc(doc(db, 'clients', id))
             items.value = items.value.filter((client) => client.id !== id)
-            cachedClients.value = cachedClients.value.filter((client) => client.id !== id)
         } catch (e) {
             console.error('clientsStore.remove failed:', e)
             throw e
@@ -160,7 +165,7 @@ export const useClientsStore = defineStore('clients', () => {
         loading,
         saving,
         error,
-        endReach,
+        loaded,
         fetch,
         reset,
         create,
