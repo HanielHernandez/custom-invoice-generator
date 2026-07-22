@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "doppler run -- vite",
-    "build": "doppler run -- run-p type-check \"build-only {@}\" --",
+    "build": "run-p type-check \"build-only {@}\" --",
+    "build:doppler": "doppler run -- npm run build",
     "create-admin": "doppler run -- tsx scripts/createAdminUser.ts",
     "preview": "doppler run -- vite preview",
     "test:unit": "doppler run -- vitest",

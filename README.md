@@ -31,7 +31,13 @@ This app loads env vars from [Doppler](https://doppler.com) (project: `custom-in
 doppler setup --no-interactive
 ```
 
-That uses `doppler.yaml` (`custom-invoice-generator` / `dev`). Vite scripts below wrap commands with `doppler run` so `VITE_*` secrets are injected into `import.meta.env`.
+That uses `doppler.yaml` (`custom-invoice-generator` / `dev`). Local scripts wrap with `doppler run` so `VITE_*` secrets are injected into `import.meta.env`.
+
+**Vercel:** `npm run build` does **not** use the Doppler CLI. Sync secrets to Vercel via the [Doppler ↔ Vercel integration](https://docs.doppler.com/docs/vercel) (or set `VITE_*` in the Vercel project env settings). For a local production build with Doppler:
+
+```sh
+npm run build:doppler
+```
 
 ### Compile and Hot-Reload for Development
 
