@@ -10,16 +10,44 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.role == 'admin';
     }
 
+    function ownsCompany(companyId) {
+      return isSignedIn()
+        && companyId is string
+        && companyId.size() > 0
+        && get(/databases/$(database)/documents/companies/$(companyId)).data.uuid
+          == request.auth.uid;
+    }
+
+    function canAccessClient() {
+      return isAdmin()
+        || resource.data.uid == request.auth.uid
+        || ownsCompany(resource.data.companyId);
+    }
+
     // Public read; only admins can create/update/delete
     match /plans/{planId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
+    match /clients/{clientId} {
+      allow read: if canAccessClient();
+      allow create: if isSignedIn() && (
+        isAdmin()
+        || (
+          request.resource.data.uid == request.auth.uid
+          && ownsCompany(request.resource.data.companyId)
+        )
+      );
+      allow update, delete: if canAccessClient();
+    }
+
     // Everything else: signed-in users (same as your Jun 12 rules),
-    // but exclude plans so the catch-all cannot bypass admin write.
+    // but exclude plans/clients so catch-all cannot bypass tighter rules.
     match /{collection}/{document=**} {
-      allow read, write: if isSignedIn() && collection != 'plans';
+      allow read, write: if isSignedIn()
+        && collection != 'plans'
+        && collection != 'clients';
     }
   }
 }

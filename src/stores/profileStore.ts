@@ -84,6 +84,7 @@ export const useProfileStore = defineStore('profile', () => {
         profile.value = null
         error.value = null
         loaded.value = false
+        loading.value = false
     }
 
     return {

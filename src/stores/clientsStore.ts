@@ -5,6 +5,7 @@ import {
     collection,
     deleteDoc,
     doc,
+    getDoc,
     getDocs,
     query,
     updateDoc,
@@ -43,6 +44,17 @@ export const useClientsStore = defineStore('clients', () => {
         return companyId
     }
 
+    const isAdminUser = async () => {
+        const user = auth.currentUser
+        if (!user) return false
+
+        const tokenResult = await user.getIdTokenResult()
+        if (tokenResult.claims.role === 'admin') return true
+
+        const profileSnap = await getDoc(doc(db, 'profiles', user.uid))
+        return profileSnap.exists() && profileSnap.data()?.role === 'admin'
+    }
+
     const fetch = async (force = false) => {
         const user = auth.currentUser
         if (!user) {
@@ -56,20 +68,36 @@ export const useClientsStore = defineStore('clients', () => {
             loading.value = true
             error.value = null
 
-            const tokenResult = await user.getIdTokenResult()
-            const role = tokenResult.claims.role
-            const clientsQuery =
-                role === 'admin'
-                    ? query(collection(db, 'clients'))
-                    : query(collection(db, 'clients'), where('uid', '==', user.uid))
+            let docs: Client[]
 
-            const snap = await getDocs(clientsQuery)
-
-            items.value = snap.docs
-                .map((docSnap) => ({
+            if (await isAdminUser()) {
+                const snap = await getDocs(collection(db, 'clients'))
+                docs = snap.docs.map((docSnap) => ({
                     ...(docSnap.data() as Client),
                     id: docSnap.id
                 }))
+            } else {
+                const companyId = await getUserCompanyId()
+                const [byUidSnap, byCompanySnap] = await Promise.all([
+                    getDocs(query(collection(db, 'clients'), where('uid', '==', user.uid))),
+                    getDocs(
+                        query(collection(db, 'clients'), where('companyId', '==', companyId))
+                    )
+                ])
+
+                const byId = new Map<string, Client>()
+                for (const snap of [byUidSnap, byCompanySnap]) {
+                    for (const docSnap of snap.docs) {
+                        byId.set(docSnap.id, {
+                            ...(docSnap.data() as Client),
+                            id: docSnap.id
+                        })
+                    }
+                }
+                docs = [...byId.values()]
+            }
+
+            items.value = docs
                 .filter(isActiveClient)
                 .sort((a, b) => b.createdAt - a.createdAt)
 

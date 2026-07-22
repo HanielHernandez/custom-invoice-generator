@@ -1,17 +1,30 @@
 <script setup lang="ts">
-import { useForm } from 'vee-validate'
-import { z } from 'zod'
-import { toTypedSchema } from '@vee-validate/zod'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
-import Input from './ui/input/Input.vue'
-import Textarea from './ui/textarea/Textarea.vue'
-import Button from './ui/button/Button.vue'
-import Checkbox from './ui/checkbox/Checkbox.vue'
-
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from '@/components/ui/select'
+import { useFlagsmith } from '@/composables/useFlagsmith'
+import { useClientsStore } from '@/stores/clientsStore'
+import type { Client } from '@/types/client'
 import type { Company } from '@/types/company'
 import type { Invoice } from '@/types/invoice'
-import LoadingSpinner from './ui/LoadingSpinner.vue'
+import { toTypedSchema } from '@vee-validate/zod'
 import { MenuIcon, StoreIcon } from 'lucide-vue-next'
+import { storeToRefs } from 'pinia'
+import { useForm } from 'vee-validate'
+import { computed, onMounted, ref } from 'vue'
+import { z } from 'zod'
+import Button from './ui/button/Button.vue'
+import Checkbox from './ui/checkbox/Checkbox.vue'
+import Input from './ui/input/Input.vue'
+import Label from './ui/label/Label.vue'
+import LoadingSpinner from './ui/LoadingSpinner.vue'
+import { Switch } from './ui/switch'
+import Textarea from './ui/textarea/Textarea.vue'
 
 const {
     company,
@@ -27,6 +40,31 @@ const emit = defineEmits<{
     (e: 'onSave', payload: Invoice): void
     (e: 'onCancle.'): void
 }>()
+
+const { clients: clientsFlag, getFlagsmith } = useFlagsmith()
+const clientsStore = useClientsStore()
+const { items: clients, loading: clientsLoading } = storeToRefs(clientsStore)
+
+const enterClientInfoManually = ref(true)
+const selectedClientId = ref<string>('')
+const clientSelectError = ref<string | null>(null)
+
+/** Client picker when flag is on and manual entry is off */
+const showClientSelect = computed(
+    () => clientsFlag.value && !enterClientInfoManually.value
+)
+/** Normal customer fields when flag is off, or manual entry is on */
+const showManualCustomerFields = computed(
+    () => !clientsFlag.value || enterClientInfoManually.value
+)
+
+const onManualToggle = (value: boolean) => {
+    enterClientInfoManually.value = value
+    clientSelectError.value = null
+    if (enterClientInfoManually.value) {
+        selectedClientId.value = ''
+    }
+}
 
 const invoiceSchema = z.object({
     name: z.string().min(1, 'Name is required'),
@@ -44,7 +82,7 @@ const invoiceSchema = z.object({
 // Tipo inferido desde el esquema
 export type InvoiceFormValues = z.infer<typeof invoiceSchema>
 
-const { handleSubmit, handleReset } = useForm<InvoiceFormValues>({
+const { handleSubmit, handleReset, setValues } = useForm<InvoiceFormValues>({
     validationSchema: toTypedSchema(invoiceSchema),
     initialValues: invoice
         ? {
@@ -54,8 +92,47 @@ const { handleSubmit, handleReset } = useForm<InvoiceFormValues>({
         : { services: [], materials: false }
 })
 
-const onSubmit = handleSubmit((data: InvoiceFormValues) => {
+const applyClientToForm = (client: Client) => {
+    setValues({
+        customerName: client.name ?? '',
+        customerAddres: client.address ?? '',
+        phone: client.phone ?? '',
+        zip: client.cityStateZip ?? ''
+    })
+}
+
+const onClientSelect = (clientId: unknown) => {
+    const id = typeof clientId === 'string' ? clientId : ''
+    selectedClientId.value = id
+    clientSelectError.value = null
+    if (!id) return
+
+    const client = clients.value.find((item) => item.id === id)
+    if (client) applyClientToForm(client)
+}
+
+const saveInvoice = handleSubmit((data: InvoiceFormValues) => {
     emit('onSave', data as unknown as Invoice)
+})
+
+const onSubmit = async () => {
+    if (showClientSelect.value) {
+        const client = clients.value.find((item) => item.id === selectedClientId.value)
+        if (!client) {
+            clientSelectError.value = 'Select a client'
+            return
+        }
+        applyClientToForm(client)
+    }
+
+    await saveInvoice()
+}
+
+onMounted(async () => {
+    await getFlagsmith()
+    if (clientsFlag.value) {
+        await clientsStore.fetch()
+    }
 })
 </script>
 
@@ -83,45 +160,102 @@ const onSubmit = handleSubmit((data: InvoiceFormValues) => {
             </FormField>
         </div>
 
-        <FormField v-slot="{ componentField }" name="customerName">
-            <FormItem>
-                <FormLabel>Customer Name</FormLabel>
-                <FormControl>
-                    <Input v-bind="componentField" placeholder="Enter customer name" />
-                </FormControl>
-                <FormMessage />
-            </FormItem>
-        </FormField>
+        <div v-if="clientsFlag" class="flex items-center gap-2">
+            <Switch
+                id="enter-client-manually"
+                class="h-4 w-7 [&_[data-slot=switch-thumb]]:size-3 [&_[data-slot=switch-thumb][data-state=checked]]:translate-x-3"
+                :model-value="enterClientInfoManually"
+                @update:model-value="onManualToggle"
+            />
+            <Label for="enter-client-manually" class="cursor-pointer text-sm font-normal">
+                Enter client info manually
+            </Label>
+        </div>
 
-        <FormField v-slot="{ componentField }" name="customerAddres">
-            <FormItem>
-                <FormLabel>Customer Address</FormLabel>
-                <FormControl>
-                    <Input v-bind="componentField" placeholder="Enter customer address" />
-                </FormControl>
-                <FormMessage />
-            </FormItem>
-        </FormField>
+        <div v-if="showClientSelect" class="space-y-2">
+            <Label>Client</Label>
+            <Select :model-value="selectedClientId" @update:model-value="onClientSelect">
+                <SelectTrigger class="w-full">
+                    <SelectValue placeholder="Select a client" />
+                </SelectTrigger>
+                <SelectContent>
+                    <div
+                        v-if="clientsLoading"
+                        class="px-2 py-3 text-sm text-muted-foreground"
+                    >
+                        Loading clients…
+                    </div>
+                    <div
+                        v-else-if="clients.length === 0"
+                        class="px-2 py-3 text-sm text-muted-foreground"
+                    >
+                        No clients found.
+                    </div>
+                    <template v-else>
+                        <SelectItem
+                            v-for="client in clients"
+                            :key="client.id"
+                            :value="client.id || ''"
+                        >
+                            <div class="flex min-w-0 flex-col gap-0.5 py-0.5 text-left">
+                                <span class="font-medium">{{ client.name }}</span>
+                                <span class="text-xs text-muted-foreground">
+                                    {{ client.email }}
+                                    <template v-if="client.phone">
+                                        · {{ client.phone }}
+                                    </template>
+                                </span>
+                            </div>
+                        </SelectItem>
+                    </template>
+                </SelectContent>
+            </Select>
+            <p v-if="clientSelectError" class="text-sm text-destructive-foreground">
+                {{ clientSelectError }}
+            </p>
+        </div>
 
-        <FormField v-slot="{ componentField }" name="zip">
-            <FormItem>
-                <FormLabel>City, State, ZIP</FormLabel>
-                <FormControl>
-                    <Input v-bind="componentField" placeholder="Enter ZIP and city" />
-                </FormControl>
-                <FormMessage />
-            </FormItem>
-        </FormField>
+        <template v-if="showManualCustomerFields">
+            <FormField v-slot="{ componentField }" name="customerName">
+                <FormItem>
+                    <FormLabel>Customer Name</FormLabel>
+                    <FormControl>
+                        <Input v-bind="componentField" placeholder="Enter customer name" />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+            </FormField>
 
-        <FormField v-slot="{ componentField }" name="phone">
-            <FormItem>
-                <FormLabel>Phone</FormLabel>
-                <FormControl>
-                    <Input v-bind="componentField" placeholder="Enter phone number" />
-                </FormControl>
-                <FormMessage />
-            </FormItem>
-        </FormField>
+            <FormField v-slot="{ componentField }" name="customerAddres">
+                <FormItem>
+                    <FormLabel>Customer Address</FormLabel>
+                    <FormControl>
+                        <Input v-bind="componentField" placeholder="Enter customer address" />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+            </FormField>
+
+            <FormField v-slot="{ componentField }" name="zip">
+                <FormItem>
+                    <FormLabel>City, State, ZIP</FormLabel>
+                    <FormControl>
+                        <Input v-bind="componentField" placeholder="Enter ZIP and city" />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+            </FormField>
+
+            <FormField v-slot="{ componentField }" name="phone">
+                <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                        <Input v-bind="componentField" placeholder="Enter phone number" />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+            </FormField>
+        </template>
 
         <FormField v-slot="{ componentField }" name="total">
             <FormItem>

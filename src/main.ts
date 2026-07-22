@@ -22,12 +22,13 @@ onAuthStateChanged(auth, (user) => {
         app.mount('#app')
     }
 
+    const authStore = useAuthStore()
+
     if (user) {
         console.log('User is logged in:', user.email)
-        const authStore = useAuthStore()
         authStore.setUser(user)
-        // You can update a global store here if needed
     } else {
         console.log('User is logged out')
+        authStore.clearSession()
     }
 })

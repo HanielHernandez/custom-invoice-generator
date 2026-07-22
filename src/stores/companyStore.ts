@@ -52,5 +52,10 @@ export const useCompanyStore = defineStore('company', () => {
         }
     }
 
-    return { fetchCompany, company, find }
+    const reset = () => {
+        company.value = null
+        loading.value = false
+    }
+
+    return { fetchCompany, company, find, reset }
 })
