@@ -80,6 +80,40 @@ export const useProfileStore = defineStore('profile', () => {
         await updateFlags({ onboardingComplete: true })
     }
 
+    const isUsageLimitReached = (featureId: string) => {
+        const featureUsage = profile.value?.usage?.find(
+            (usage) => usage.featureId === featureId
+        )
+
+        if (!featureUsage) return false
+        return featureUsage.used >= featureUsage.limit
+    }
+
+    const assertUsageAvailable = async (featureId: string) => {
+        if (!loaded.value) {
+            await fetchProfile()
+        }
+
+        if (isUsageLimitReached(featureId)) {
+            throw new Error(
+                `You have reached your ${featureId} limit. Upgrade your plan to create more.`
+            )
+        }
+    }
+
+    const incrementLocalUsage = (featureId: string) => {
+        if (!profile.value?.usage) return
+
+        profile.value = {
+            ...profile.value,
+            usage: profile.value.usage.map((usage) =>
+                usage.featureId === featureId
+                    ? { ...usage, used: usage.used + 1 }
+                    : usage
+            )
+        }
+    }
+
     const reset = () => {
         profile.value = null
         error.value = null
@@ -96,6 +130,9 @@ export const useProfileStore = defineStore('profile', () => {
         fetchProfile,
         updateFlags,
         markOnboardingComplete,
+        isUsageLimitReached,
+        assertUsageAvailable,
+        incrementLocalUsage,
         reset
     }
 })

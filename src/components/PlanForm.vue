@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
     Select,
     SelectContent,
@@ -32,6 +33,7 @@ const isEditing = computed(() => Boolean(props.plan?.id))
 
 const id = ref(props.plan?.id ?? '')
 const name = ref(props.plan?.name ?? '')
+const description = ref(props.plan?.description ?? '')
 const interval = ref<PlanInterval>(props.plan?.interval ?? 'monthly')
 const isFree = ref(Boolean(props.plan?.isFree))
 const stripePriceId = ref(props.plan?.stripePriceId ?? '')
@@ -119,6 +121,7 @@ const onSubmit = async () => {
     try {
         const payload = {
             name: name.value.trim(),
+            description: description.value.trim(),
             interval: interval.value,
             isFree: isFree.value,
             features: features.value.map((feature) => ({
@@ -175,6 +178,15 @@ const onSubmit = async () => {
         <div class="grid gap-2">
             <Label for="plan-name">Name</Label>
             <Input id="plan-name" v-model="name" type="text" placeholder="Monthly Plan" />
+        </div>
+
+        <div class="grid gap-2">
+            <Label for="plan-description">Description</Label>
+            <Textarea
+                id="plan-description"
+                v-model="description"
+                placeholder="Describe who this plan is for and what it includes"
+            />
         </div>
 
         <div class="grid gap-2">

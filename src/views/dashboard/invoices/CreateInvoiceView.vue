@@ -10,6 +10,7 @@ import { auth } from '@/lib/firebase'
 import { generateInvoiceCode } from '@/lib/utils'
 import { useCompanyStore } from '@/stores/companyStore'
 import { useInvoiceStore } from '@/stores/InvoiceStore'
+import { useProfileStore } from '@/stores/profileStore'
 import type { Invoice } from '@/types/invoice'
 import { ArrowLeft } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
@@ -21,12 +22,17 @@ const companyStore = useCompanyStore()
 const { company } = storeToRefs(companyStore)
 const router = useRouter()
 const invoicesStore = useInvoiceStore()
+const profileStore = useProfileStore()
 const dialogOpen = ref(false)
 const { error } = storeToRefs(invoicesStore)
 
 const uid = computed(() => {
     return auth.currentUser?.uid
 })
+
+const invoiceLimitReached = computed(() =>
+    profileStore.isUsageLimitReached('invoices')
+)
 
 const onFormSave = async (values: Invoice) => {
     console.log(company.value === null)
@@ -79,6 +85,9 @@ const onFormSave = async (values: Invoice) => {
         })
     } catch (e) {
         console.error(e)
+        toast.error('Unable to create invoice', {
+            description: e instanceof Error ? e.message : String(e)
+        })
     }
 }
 
@@ -112,7 +121,10 @@ const onFormCancel = () => {
             <CardHeader>
                 <CardTitle> Nuevo invoice</CardTitle>
                 <CardDescription>
-                    <p v-if="companyStore.company">
+                    <p v-if="invoiceLimitReached">
+                        You have reached your invoice limit. Upgrade your plan to create more.
+                    </p>
+                    <p v-else-if="companyStore.company">
                         Fill the folowing form to create a new invoice
                     </p>
                     <p v-else>Please configure your company before creating a new Invoice</p>
@@ -121,7 +133,7 @@ const onFormCancel = () => {
 
             <CardContent>
                 <InvoiceForm
-                    v-if="companyStore.company"
+                    v-if="companyStore.company && !invoiceLimitReached"
                     :loading="invoicesStore.loading"
                     :company="companyStore.company"
                     @on-cancel="onFormCancel"

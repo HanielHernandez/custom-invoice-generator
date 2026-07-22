@@ -78,6 +78,15 @@ export const dashboardRoutes = [
         }
     },
     {
+        path: 'billing',
+        name: 'billing',
+        component: () => import('../views/dashboard/BillingView.vue'),
+        meta: {
+            requiresAuth: true,
+            requiresPlansFlag: true
+        }
+    },
+    {
         path: 'plans',
         name: 'plans',
         component: () => import('../views/dashboard/PlansView.vue'),

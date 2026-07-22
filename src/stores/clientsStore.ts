@@ -14,6 +14,7 @@ import {
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useCompanyStore } from './companyStore'
+import { useProfileStore } from './profileStore'
 
 export type CreateClientPayload = Omit<
     Client,
@@ -120,6 +121,9 @@ export const useClientsStore = defineStore('clients', () => {
         const user = auth.currentUser
         if (!user) throw new Error('User not authenticated')
 
+        const profileStore = useProfileStore()
+        await profileStore.assertUsageAvailable('clients')
+
         saving.value = true
         try {
             const companyId = await getUserCompanyId()
@@ -134,6 +138,7 @@ export const useClientsStore = defineStore('clients', () => {
                 deletedAt: null
             }
             const { id } = await addDoc(collection(db, 'clients'), client)
+            profileStore.incrementLocalUsage('clients')
             const created = { ...client, id }
             items.value = [created, ...items.value]
             return id

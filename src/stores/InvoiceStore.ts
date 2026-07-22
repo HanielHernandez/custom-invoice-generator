@@ -3,6 +3,7 @@ import type { Invoice } from '@/types/invoice'
 import { addDoc, collection, doc, getDoc, updateDoc } from 'firebase/firestore'
 import { defineStore } from 'pinia'
 import { reactive, ref, type Ref } from 'vue'
+import { useProfileStore } from './profileStore'
 
 const catchErrors = async (
     callBack: () => Promise<void>,
@@ -33,9 +34,13 @@ export const useInvoiceStore = defineStore('invoices', () => {
     const invoice = ref<Invoice | null>(null)
 
     const create = async (payloadInvoice: Invoice): Promise<string | null> => {
+        const profileStore = useProfileStore()
+        await profileStore.assertUsageAvailable('invoices')
+
         loading.value = true
         try {
             const { id } = await addDoc(collection(db, 'invoices'), payloadInvoice)
+            profileStore.incrementLocalUsage('invoices')
             return id
         } catch (e) {
             console.error(e)

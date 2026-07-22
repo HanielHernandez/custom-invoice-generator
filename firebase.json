@@ -15,8 +15,8 @@
         "*.local"
       ],
       "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint",
-        "npm --prefix \"$RESOURCE_DIR\" run build"
+        "cd \"$RESOURCE_DIR\" && ./node_modules/.bin/eslint --ext .js,.ts .",
+        "cd \"$RESOURCE_DIR\" && ./node_modules/.bin/tsc"
       ]
     }
   ]

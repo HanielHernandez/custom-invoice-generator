@@ -78,6 +78,13 @@ const menuItems: MenuItem[] = [
         requiresClientsFlag: true
     },
     {
+        name: 'Plans & Billing',
+        icon: CreditCardIcon,
+        url: '/dashboard/billing',
+        role: 'any',
+        requiresPlansFlag: true
+    },
+    {
         name: 'Plans',
         icon: CreditCardIcon,
         url: '/dashboard/plans',

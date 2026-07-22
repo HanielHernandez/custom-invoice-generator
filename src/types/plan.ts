@@ -8,6 +8,7 @@ export type PlanFeature = {
 export type Plan = {
     id: string
     name: string
+    description: string
     interval: PlanInterval
     isFree: boolean
     stripePriceId?: string

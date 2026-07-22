@@ -16,6 +16,7 @@ import { ref } from 'vue'
 export type PlanPayload = {
     id: string
     name: string
+    description: string
     interval: PlanInterval
     isFree: boolean
     stripePriceId?: string
@@ -42,6 +43,7 @@ const mapPlan = (id: string, data: Record<string, unknown>): Plan => {
     const plan: Plan = {
         id,
         name: String(data.name ?? ''),
+        description: String(data.description ?? ''),
         interval: (data.interval === 'annually' ? 'annually' : 'monthly') as PlanInterval,
         isFree,
         features: normalizeFeatures(data.features),
@@ -69,6 +71,7 @@ const buildPlanData = (payload: Omit<PlanPayload, 'id'>, timestamps: {
 }) => {
     const base = {
         name: payload.name.trim(),
+        description: payload.description.trim(),
         interval: payload.interval,
         isFree: payload.isFree,
         features: normalizeFeatures(payload.features),
@@ -112,6 +115,21 @@ export const usePlansStore = defineStore('plans', () => {
         } finally {
             loading.value = false
         }
+    }
+
+    const fetchById = async (id: string) => {
+        const planId = id.trim()
+        if (!planId) return null
+
+        const cachedPlan = items.value.find((plan) => plan.id === planId)
+        if (cachedPlan) return cachedPlan
+
+        const snap = await getDoc(doc(db, 'plans', planId))
+        if (!snap.exists()) return null
+
+        const plan = mapPlan(snap.id, snap.data() as Record<string, unknown>)
+        items.value = [...items.value, plan].sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
+        return plan
     }
 
     const create = async (payload: PlanPayload) => {
@@ -194,6 +212,7 @@ export const usePlansStore = defineStore('plans', () => {
         error,
         loaded,
         fetch,
+        fetchById,
         create,
         update,
         remove,

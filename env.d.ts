@@ -7,5 +7,6 @@ declare module 'vue-router' {
         requiresAuth?: boolean
         requiresRole?: string
         requiresClientsFlag?: boolean
+        requiresPlansFlag?: boolean
     }
 }

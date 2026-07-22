@@ -12,7 +12,7 @@ import FormLabel from '@/components/ui/form/FormLabel.vue'
 import FormMessage from '@/components/ui/form/FormMessage.vue'
 import Input from '@/components/ui/input/Input.vue'
 import { auth, db } from '@/lib/firebase'
-import type { PlanId, UserProfile } from '@/lib/firebase-auth'
+import type { PlanId, UserProfile, UserUsage } from '@/lib/firebase-auth'
 import { useAuthStore } from '@/stores/authStore'
 import { toTypedSchema } from '@vee-validate/zod'
 import { FirebaseError } from 'firebase/app'
@@ -29,6 +29,21 @@ const authStore = useAuthStore()
 const error = ref<string | null>(null)
 const isPasswordVisible = ref(false)
 const isConfirmPasswordVisible = ref(false)
+
+const buildUsage = (features: unknown): UserUsage[] => {
+    if (!Array.isArray(features)) return []
+
+    return features.flatMap((feature) => {
+        if (!feature || typeof feature !== 'object') return []
+
+        const { id, value } = feature as { id?: unknown; value?: unknown }
+        const featureId = typeof id === 'string' ? id.trim() : ''
+        const limit = Number(value)
+
+        if (!featureId || !Number.isInteger(limit)) return []
+        return [{ featureId, used: 0, limit }]
+    })
+}
 
 const validationSchema = toTypedSchema(
     z
@@ -57,6 +72,7 @@ const onSubmit = handleSubmit(async ({ name, email, password }) => {
             throw new Error('Free plan not found. Please contact support.')
         }
         const planId: PlanId = freePlanSnap.id
+        const usage = buildUsage(freePlanSnap.data().features)
 
         const { user } = await createUserWithEmailAndPassword(auth, email, password)
         const photoUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`
@@ -71,6 +87,7 @@ const onSubmit = handleSubmit(async ({ name, email, password }) => {
             photoUrl,
             role: 'editor',
             planId,
+            usage,
             flags: {
                 onboardingComplete: false
             },

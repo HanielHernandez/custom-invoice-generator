@@ -6,6 +6,12 @@ export type UserProfileFlags = {
     onboardingComplete?: boolean
 }
 
+export type UserUsage = {
+    featureId: string
+    used: number
+    limit: number
+}
+
 export type User = {
     email: string | null
     password?: string
@@ -20,6 +26,7 @@ export type UserProfile = User & {
     role: string
     uid: string
     planId: PlanId
+    usage: UserUsage[]
     flags?: UserProfileFlags
 }
 

@@ -4,16 +4,19 @@ import { Button } from '@/components/ui/button'
 
 import { useCompanyStore } from '@/stores/companyStore'
 import { useInvoiceStore } from '@/stores/InvoiceStore'
+import { useProfileStore } from '@/stores/profileStore'
 import { PlusIcon, RefreshCcw } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { toast, Toaster } from 'vue-sonner'
 
 const companyStore = useCompanyStore()
 // company y router removidos (no usados tras refactor)
 const route = useRoute()
+const router = useRouter()
 const invoicesStore = useInvoiceStore()
+const profileStore = useProfileStore()
 // Dialog removido: ya no se usa estado dialogOpen
 const { error } = storeToRefs(invoicesStore)
 
@@ -42,6 +45,21 @@ const isNotPrintview = computed(() => {
 const reload = () => {
     window.location.reload()
 }
+
+const invoiceLimitReached = computed(() =>
+    profileStore.isUsageLimitReached('invoices')
+)
+
+const openCreateInvoice = () => {
+    if (invoiceLimitReached.value) {
+        toast.error('Invoice limit reached', {
+            description: 'Upgrade your plan to create more invoices.'
+        })
+        return
+    }
+
+    router.push('/dashboard/invoices/new')
+}
 </script>
 <template>
     <Toaster class="pointer-events-auto" />
@@ -53,13 +71,12 @@ const reload = () => {
                     <Button color="primary" @click="reload">
                         <RefreshCcw class="size-4" /> Recargar</Button
                     >
-                    <Button asChild>
-                        <RouterLink
-                            to="/dashboard/invoices/new"
-                            class="inline-flex items-center gap-2"
-                        >
-                            <PlusIcon class="size-4" /> Nuevo Invoice
-                        </RouterLink>
+                    <Button
+                        :disabled="invoiceLimitReached"
+                        @click="openCreateInvoice"
+                    >
+                        <PlusIcon class="size-4" />
+                        {{ invoiceLimitReached ? 'Invoice limit reached' : 'Nuevo Invoice' }}
                     </Button>
                 </div>
             </div>

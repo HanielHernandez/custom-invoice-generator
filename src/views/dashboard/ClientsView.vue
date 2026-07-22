@@ -6,17 +6,29 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
 import DialogDescription from '@/components/ui/dialog/DialogDescription.vue'
 import DialogTitle from '@/components/ui/dialog/DialogTitle.vue'
+import { useProfileStore } from '@/stores/profileStore'
 import type { Client } from '@/types/client'
 import { PlusIcon } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
-import { Toaster } from 'vue-sonner'
+import { toast, Toaster } from 'vue-sonner'
 
+const profileStore = useProfileStore()
 const dialogOpen = ref(false)
 const editingClient = ref<Client | null>(null)
 
 const isEditing = computed(() => Boolean(editingClient.value?.id))
+const clientLimitReached = computed(() =>
+    profileStore.isUsageLimitReached('clients')
+)
 
 const openCreateDialog = () => {
+    if (clientLimitReached.value) {
+        toast.error('Client limit reached', {
+            description: 'Upgrade your plan to create more clients.'
+        })
+        return
+    }
+
     editingClient.value = null
     dialogOpen.value = true
 }
@@ -41,9 +53,9 @@ const onFormSave = () => {
     <section class="flex flex-col gap-4">
         <div class="flex items-center justify-between">
             <AtText variant="h2">Clients</AtText>
-            <Button @click="openCreateDialog">
+            <Button :disabled="clientLimitReached" @click="openCreateDialog">
                 <PlusIcon class="h-4 w-4" />
-                Add Client
+                {{ clientLimitReached ? 'Client limit reached' : 'Add Client' }}
             </Button>
         </div>
 
