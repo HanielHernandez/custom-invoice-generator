@@ -20,6 +20,19 @@ See [Vite Configuration Reference](https://vite.dev/config/).
 npm install
 ```
 
+### Environment variables (Doppler)
+
+This app loads env vars from [Doppler](https://doppler.com) (project: `custom-invoice-generator`) instead of a local `.env` / `.env.local` file.
+
+1. Install the [Doppler CLI](https://docs.doppler.com/docs/install-cli) and run `doppler login`
+2. From the repo root, link the project:
+
+```sh
+doppler setup --no-interactive
+```
+
+That uses `doppler.yaml` (`custom-invoice-generator` / `dev`). Vite scripts below wrap commands with `doppler run` so `VITE_*` secrets are injected into `import.meta.env`.
+
 ### Compile and Hot-Reload for Development
 
 ```sh
