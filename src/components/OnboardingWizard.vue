@@ -233,18 +233,51 @@ const goToDashboard = () => {
 </script>
 
 <template>
-    <div class="flex flex-col items-center my-auto justify-center p-4 h-screen">
-        <Card class="flex w-full max-w-6xl flex-col py-0 overflow-hidden md:min-h-[640px]">
-            <div class="grid flex-1 md:grid-cols-[280px_1fr]">
-                <aside class="border-b bg-muted/40 p-6 md:border-b-0 md:border-r">
-                    <div class="mb-8">
+    <div class="flex h-dvh flex-col items-center justify-center p-3 sm:p-4">
+        <Card
+            class="flex h-full max-h-full w-full max-w-6xl flex-col gap-0 overflow-hidden py-0 md:h-auto md:min-h-[640px] md:max-h-[min(720px,calc(100dvh-2rem))]"
+        >
+            <div
+                class="grid min-h-0 flex-1 grid-rows-[auto_1fr] md:grid-cols-[280px_1fr] md:grid-rows-1"
+            >
+                <aside
+                    class="shrink-0 border-b bg-muted/40 p-4 md:border-b-0 md:border-r md:p-6"
+                >
+                    <div class="mb-3 md:mb-8">
                         <AtText variant="h2">Welcome</AtText>
-                        <p class="mt-2 text-sm text-muted-foreground">
+                        <p class="mt-1 hidden text-sm text-muted-foreground md:mt-2 md:block">
                             Let’s set up your company so you can start creating invoices.
                         </p>
                     </div>
 
-                    <ol class="flex flex-col gap-4">
+                    <!-- Mobile: compact step indicators -->
+                    <ol class="flex items-center justify-between gap-1 md:hidden">
+                        <li v-for="(item, index) in steps" :key="`m-${item.id}`">
+                            <button
+                                type="button"
+                                class="flex flex-col items-center gap-1"
+                                :disabled="index > currentStep || isFinishing"
+                                @click="goToStep(index)"
+                            >
+                                <span
+                                    class="flex h-8 w-8 items-center justify-center rounded-full border text-xs font-medium"
+                                    :class="
+                                        index < currentStep
+                                            ? 'border-primary bg-primary text-primary-foreground'
+                                            : index === currentStep
+                                              ? 'border-primary bg-background text-foreground'
+                                              : 'border-border bg-background text-muted-foreground'
+                                    "
+                                >
+                                    <Check v-if="index < currentStep" class="h-4 w-4" />
+                                    <template v-else>{{ index + 1 }}</template>
+                                </span>
+                            </button>
+                        </li>
+                    </ol>
+
+                    <!-- Desktop: full step list -->
+                    <ol class="hidden flex-col gap-4 md:flex">
                         <li v-for="(item, index) in steps" :key="item.id">
                             <button
                                 type="button"
@@ -283,7 +316,7 @@ const goToDashboard = () => {
                     </ol>
                 </aside>
 
-                <div class="flex min-h-0 flex-col gap-8 py-6">
+                <div class="flex min-h-0 flex-col">
                     <template v-if="finishPhase === 'saving'">
                         <CardContent
                             class="flex flex-1 flex-col items-center justify-center gap-4 text-center"
@@ -324,12 +357,12 @@ const goToDashboard = () => {
                     </template>
 
                     <template v-else>
-                    <CardHeader class="gap-2">
+                    <CardHeader class="shrink-0 gap-1 py-4 md:gap-2 md:py-6">
                         <CardTitle>{{ step.title }}</CardTitle>
                         <CardDescription>{{ step.description }}</CardDescription>
                     </CardHeader>
 
-                    <CardContent class="flex-1 space-y-6 overflow-y-auto">
+                    <CardContent class="min-h-0 flex-1 space-y-6 overflow-y-auto py-0">
                         <Alert v-if="error" variant="destructive">
                             <AlertCircle class="h-4 w-4" />
                             <AlertTitle>Error</AlertTitle>
@@ -538,7 +571,9 @@ const goToDashboard = () => {
                         </div>
                     </CardContent>
 
-                    <CardFooter class="mt-auto flex justify-between gap-3 border-t">
+                    <CardFooter
+                        class="shrink-0 justify-between gap-3 border-t bg-background py-4"
+                    >
                         <Button
                             type="button"
                             variant="outline"

@@ -1,0 +1,25 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role == 'admin';
+    }
+
+    // Public read; only admins can create/update/delete
+    match /plans/{planId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Everything else: signed-in users (same as your Jun 12 rules),
+    // but exclude plans so the catch-all cannot bypass admin write.
+    match /{collection}/{document=**} {
+      allow read, write: if isSignedIn() && collection != 'plans';
+    }
+  }
+}

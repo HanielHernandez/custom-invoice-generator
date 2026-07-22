@@ -17,7 +17,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { toTypedSchema } from '@vee-validate/zod'
 import { FirebaseError } from 'firebase/app'
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
-import { doc, setDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { AlertCircle, EyeClosed, EyeIcon } from 'lucide-vue-next'
 import { useForm } from 'vee-validate'
 import { ref } from 'vue'
@@ -52,11 +52,16 @@ const onSubmit = handleSubmit(async ({ name, email, password }) => {
     error.value = null
 
     try {
+        const freePlanSnap = await getDoc(doc(db, 'plans', 'free'))
+        if (!freePlanSnap.exists()) {
+            throw new Error('Free plan not found. Please contact support.')
+        }
+        const planId: PlanId = freePlanSnap.id
+
         const { user } = await createUserWithEmailAndPassword(auth, email, password)
         const photoUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`
         await updateProfile(user, { displayName: name, photoURL: photoUrl })
 
-        const planId: PlanId = 'free'
         const now = Date.now()
         const profile: UserProfile = {
             uid: user.uid,

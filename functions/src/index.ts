@@ -110,6 +110,12 @@ export const createCustomerUser = onRequest(async (req, res: any) => {
         await auth.setCustomUserClaims(user.uid, { role: 'editor' })
 
         const db = getFirestore()
+        const freePlanSnap = await db.collection('plans').doc('free').get()
+        if (!freePlanSnap.exists) {
+            return res.status(500).json({ error: 'Free plan not found in plans collection.' })
+        }
+        const planId = freePlanSnap.id
+
         const displayName = name || email.split('@')[0]
         const photoUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}`
 
@@ -123,7 +129,7 @@ export const createCustomerUser = onRequest(async (req, res: any) => {
                 phoneNumber: phoneNumber || null,
                 photoUrl,
                 role: 'editor',
-                planId: 'free',
+                planId,
                 flags: {
                     onboardingComplete: false
                 },

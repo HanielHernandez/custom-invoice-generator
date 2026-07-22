@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-export type PlanId = 'free' | 'monthly'
+export type PlanId = string
 
 export type UserProfileFlags = {
     onboardingComplete?: boolean

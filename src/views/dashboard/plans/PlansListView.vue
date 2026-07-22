@@ -12,6 +12,12 @@ import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
 import DialogDescription from '@/components/ui/dialog/DialogDescription.vue'
 import DialogTitle from '@/components/ui/dialog/DialogTitle.vue'
 import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import {
     Table,
     TableBody,
     TableCell,
@@ -21,7 +27,7 @@ import {
 } from '@/components/ui/table'
 import { usePlansStore } from '@/stores/plansStore'
 import type { Plan } from '@/types/plan'
-import { PencilIcon } from 'lucide-vue-next'
+import { MoreVertical, PencilIcon } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 import { onMounted, ref } from 'vue'
 
@@ -54,6 +60,11 @@ const formatPrice = (price: number) =>
         style: 'currency',
         currency: 'USD'
     }).format(price)
+
+const planSubtitle = (plan: Plan) => {
+    const priceLabel = plan.isFree ? 'Free' : formatPrice(plan.price ?? 0)
+    return `${priceLabel} · ${plan.interval}`
+}
 </script>
 
 <template>
@@ -68,52 +79,72 @@ const formatPrice = (price: number) =>
             <div v-else-if="items.length === 0" class="py-8 text-center text-muted-foreground">
                 No plans found.
             </div>
-            <Table v-else>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Id</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Interval</TableHead>
-                        <TableHead>Free</TableHead>
-                        <TableHead>Stripe price id</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Features</TableHead>
-                        <TableHead class="w-[80px]">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    <TableRow v-for="plan in items" :key="plan.id">
-                        <TableCell>{{ plan.id }}</TableCell>
-                        <TableCell>{{ plan.name }}</TableCell>
-                        <TableCell class="capitalize">{{ plan.interval }}</TableCell>
-                        <TableCell>{{ plan.isFree ? 'Yes' : 'No' }}</TableCell>
-                        <TableCell>
-                            {{ plan.isFree ? '—' : plan.stripePriceId || '—' }}
-                        </TableCell>
-                        <TableCell>
-                            {{ plan.isFree ? 'Free' : formatPrice(plan.price ?? 0) }}
-                        </TableCell>
-                        <TableCell>
-                            <span v-if="!plan.features?.length" class="text-muted-foreground">
-                                —
-                            </span>
-                            <span v-else class="text-sm">
-                                {{
-                                    plan.features
-                                        .map((feature) => `${feature.id}:${feature.value}`)
-                                        .join(', ')
-                                }}
-                            </span>
-                        </TableCell>
-                        <TableCell>
-                            <Button variant="ghost" size="icon" @click="openEditDialog(plan)">
-                                <PencilIcon class="h-4 w-4" />
-                                <span class="sr-only">Edit</span>
-                            </Button>
-                        </TableCell>
-                    </TableRow>
-                </TableBody>
-            </Table>
+            <template v-else>
+                <ul class="divide-y md:hidden">
+                    <li
+                        v-for="plan in items"
+                        :key="plan.id"
+                        class="flex items-center gap-3 py-3"
+                    >
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate font-medium">{{ plan.name }}</p>
+                            <p class="truncate text-sm capitalize text-muted-foreground">
+                                {{ planSubtitle(plan) }}
+                            </p>
+                        </div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger as-child>
+                                <Button variant="ghost" size="icon" class="shrink-0">
+                                    <MoreVertical class="h-4 w-4" />
+                                    <span class="sr-only">Open menu</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem @click="openEditDialog(plan)">
+                                    <PencilIcon class="h-4 w-4" />
+                                    Edit
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </li>
+                </ul>
+
+                <div class="hidden md:block">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Id</TableHead>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Interval</TableHead>
+                                <TableHead>Free</TableHead>
+                                <TableHead>Price</TableHead>
+                                <TableHead class="w-[80px]">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow v-for="plan in items" :key="plan.id">
+                                <TableCell>{{ plan.id }}</TableCell>
+                                <TableCell>{{ plan.name }}</TableCell>
+                                <TableCell class="capitalize">{{ plan.interval }}</TableCell>
+                                <TableCell>{{ plan.isFree ? 'Yes' : 'No' }}</TableCell>
+                                <TableCell>
+                                    {{ plan.isFree ? 'Free' : formatPrice(plan.price ?? 0) }}
+                                </TableCell>
+                                <TableCell>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        @click="openEditDialog(plan)"
+                                    >
+                                        <PencilIcon class="h-4 w-4" />
+                                        <span class="sr-only">Edit</span>
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </div>
+            </template>
         </CardContent>
     </Card>
 

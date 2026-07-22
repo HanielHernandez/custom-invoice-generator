@@ -11,6 +11,12 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import {
     Table,
     TableBody,
     TableCell,
@@ -26,7 +32,14 @@ import {
 } from '@/components/ui/tooltip'
 import { useClientsStore } from '@/stores/clientsStore'
 import type { Client } from '@/types/client'
-import { ChevronLeft, ChevronRight, PencilIcon, SearchIcon, TrashIcon } from 'lucide-vue-next'
+import {
+    ChevronLeft,
+    ChevronRight,
+    MoreVertical,
+    PencilIcon,
+    SearchIcon,
+    TrashIcon
+} from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
@@ -167,62 +180,102 @@ const confirmDelete = async (clientId: string) => {
                 >
                     No clients found.
                 </div>
-                <Table v-else>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Phone</TableHead>
-                            <TableHead>Address</TableHead>
-                            <TableHead>City, State, Zip</TableHead>
-                            <TableHead class="w-[100px]">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        <TableRow v-for="client in pageClients" :key="client.id">
-                            <TableCell>{{ client.name }}</TableCell>
-                            <TableCell>{{ client.email }}</TableCell>
-                            <TableCell>{{ client.phone }}</TableCell>
-                            <TableCell>{{ client.address }}</TableCell>
-                            <TableCell>{{ client.cityStateZip }}</TableCell>
-                            <TableCell>
-                                <div class="flex items-center gap-1">
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger as-child>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    @click="emit('edit', client)"
-                                                >
-                                                    <PencilIcon class="h-4 w-4" />
-                                                    <span class="sr-only">Edit</span>
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>Edit</TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger as-child>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    class="text-destructive hover:text-destructive"
-                                                    @click="openDeleteDialog(client)"
-                                                >
-                                                    <TrashIcon class="h-4 w-4" />
-                                                    <span class="sr-only">Delete</span>
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>Delete</TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                    </TableBody>
-                </Table>
+                <template v-else>
+                    <ul class="divide-y md:hidden">
+                        <li
+                            v-for="client in pageClients"
+                            :key="client.id"
+                            class="flex items-center gap-3 py-3"
+                        >
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate font-medium">{{ client.name }}</p>
+                                <p class="truncate text-sm text-muted-foreground">
+                                    {{ client.email }}
+                                </p>
+                            </div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger as-child>
+                                    <Button variant="ghost" size="icon" class="shrink-0">
+                                        <MoreVertical class="h-4 w-4" />
+                                        <span class="sr-only">Open menu</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem @click="emit('edit', client)">
+                                        <PencilIcon class="h-4 w-4" />
+                                        Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        variant="destructive"
+                                        @click="openDeleteDialog(client)"
+                                    >
+                                        <TrashIcon class="h-4 w-4" />
+                                        Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </li>
+                    </ul>
+
+                    <div class="hidden md:block">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Email</TableHead>
+                                    <TableHead>Phone</TableHead>
+                                    <TableHead>Address</TableHead>
+                                    <TableHead>City, State, Zip</TableHead>
+                                    <TableHead class="w-[100px]">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow v-for="client in pageClients" :key="client.id">
+                                    <TableCell>{{ client.name }}</TableCell>
+                                    <TableCell>{{ client.email }}</TableCell>
+                                    <TableCell>{{ client.phone }}</TableCell>
+                                    <TableCell>{{ client.address }}</TableCell>
+                                    <TableCell>{{ client.cityStateZip }}</TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center gap-1">
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger as-child>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            @click="emit('edit', client)"
+                                                        >
+                                                            <PencilIcon class="h-4 w-4" />
+                                                            <span class="sr-only">Edit</span>
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Edit</TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger as-child>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            class="text-destructive hover:text-destructive"
+                                                            @click="openDeleteDialog(client)"
+                                                        >
+                                                            <TrashIcon class="h-4 w-4" />
+                                                            <span class="sr-only">Delete</span>
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Delete</TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
+                </template>
             </CardContent>
             <CardFooter>
                 <div class="flex w-full flex-row items-center justify-between">
