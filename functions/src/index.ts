@@ -1,6 +1,6 @@
 import { onRequest } from 'firebase-functions/v2/https'
 import { onDocumentCreated } from 'firebase-functions/v2/firestore'
-import { defineSecret, defineString } from 'firebase-functions/params'
+import { defineSecret } from 'firebase-functions/params'
 import { initializeApp, getApps } from 'firebase-admin/app'
 import { getAuth, type DecodedIdToken } from 'firebase-admin/auth'
 import { getFirestore, type Transaction } from 'firebase-admin/firestore'
@@ -13,7 +13,16 @@ if (!getApps().length) {
 
 const stripeApiKey = defineSecret('STRIPE_API_KEY')
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET')
-const appUrl = defineString('APP_URL')
+
+const isHttpUrl = (value: unknown): value is string => {
+    if (typeof value !== 'string' || !value.trim()) return false
+    try {
+        const url = new URL(value)
+        return url.protocol === 'http:' || url.protocol === 'https:'
+    } catch {
+        return false
+    }
+}
 
 type UserUsage = {
     featureId: string
@@ -360,13 +369,20 @@ export const createStripeCheckoutSession = onRequest(
             return
         }
 
-        const { planId, userProfile } = req.body as {
+        const { planId, userProfile, successUrl, failureUrl } = req.body as {
             planId?: unknown
             userProfile?: { uid?: unknown; email?: unknown }
+            successUrl?: unknown
+            failureUrl?: unknown
         }
 
         if (typeof planId !== 'string' || !planId.trim()) {
             res.status(400).json({ error: 'A valid planId is required.' })
+            return
+        }
+
+        if (!isHttpUrl(successUrl) || !isHttpUrl(failureUrl)) {
+            res.status(400).json({ error: 'Valid successUrl and failureUrl are required.' })
             return
         }
 
@@ -411,13 +427,6 @@ export const createStripeCheckoutSession = onRequest(
                 return
             }
 
-            const checkoutAppUrl = appUrl.value().replace(/\/+$/, '')
-            if (!checkoutAppUrl) {
-                console.error('APP_URL is not configured.')
-                res.status(500).json({ error: 'Checkout is not configured.' })
-                return
-            }
-
             const stripe = new Stripe(stripeApiKey.value())
             const session = await stripe.checkout.sessions.create({
                 mode: 'subscription',
@@ -428,8 +437,8 @@ export const createStripeCheckoutSession = onRequest(
                         quantity: 1
                     }
                 ],
-                success_url: `${checkoutAppUrl}/dashboard/billing?checkout=success`,
-                cancel_url: `${checkoutAppUrl}/dashboard/billing?checkout=cancelled`,
+                success_url: successUrl,
+                cancel_url: failureUrl,
                 metadata: {
                     uid: decodedToken.uid,
                     planId: planSnap.id

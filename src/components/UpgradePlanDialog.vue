@@ -9,6 +9,7 @@ import {
     DialogTitle
 } from '@/components/ui/dialog'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
+import { config } from '@/config'
 import { auth } from '@/lib/firebase'
 import { usePlansStore } from '@/stores/plansStore'
 import { useProfileStore } from '@/stores/profileStore'
@@ -16,9 +17,6 @@ import type { Plan, PlanInterval } from '@/types/plan'
 import { CheckIcon } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
-
-const CHECKOUT_SESSION_URL =
-    'https://us-central1-invoice-generator-9549e.cloudfunctions.net/createStripeCheckoutSession'
 
 const props = defineProps<{
     open: boolean
@@ -37,6 +35,13 @@ const { profile } = storeToRefs(profileStore)
 const selectedInterval = ref<PlanInterval>('monthly')
 const checkoutPlanId = ref<string | null>(null)
 const checkoutError = ref<string | null>(null)
+
+const getCheckoutSessionUrl = () => {
+    if (!config.firebase.functionsUrl) {
+        throw new Error('VITE_FIREBASE_FUNCTIONS_URL is not configured.')
+    }
+    return `${config.firebase.functionsUrl}/createStripeCheckoutSession`
+}
 
 const filteredPlans = computed(() =>
     plans.value.filter((plan) => plan.interval === selectedInterval.value)
@@ -69,8 +74,12 @@ const startCheckout = async (plan: Plan) => {
         }
         if (!profile.value) throw new Error('Your user profile could not be loaded.')
 
+        if (!config.siteUrl) {
+            throw new Error('VITE_SITE_URL is not configured.')
+        }
+
         const idToken = await user.getIdToken()
-        const response = await fetch(CHECKOUT_SESSION_URL, {
+        const response = await fetch(getCheckoutSessionUrl(), {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${idToken}`,
@@ -78,7 +87,9 @@ const startCheckout = async (plan: Plan) => {
             },
             body: JSON.stringify({
                 planId: plan.id,
-                userProfile: profile.value
+                userProfile: profile.value,
+                successUrl: `${config.siteUrl}/dashboard/billing?checkout=success`,
+                failureUrl: `${config.siteUrl}/dashboard/billing?checkout=cancelled`
             })
         })
 

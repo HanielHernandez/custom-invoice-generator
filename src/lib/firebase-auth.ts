@@ -1,3 +1,4 @@
+import { config } from '@/config'
 import axios from 'axios'
 
 export type PlanId = string
@@ -30,15 +31,12 @@ export type UserProfile = User & {
     flags?: UserProfileFlags
 }
 
-const FUNCTIONS_URL = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL
-const FUNCTIONS_SECRET = import.meta.env.VITE_FIREBASE_FUNCTIONS_SECRET
-
 const functionsClient = axios.create({
-    baseURL: FUNCTIONS_URL,
+    baseURL: config.firebase.functionsUrl,
     headers: {}
 })
 
 export const createUser = (user: User) => {
-    const authToken = FUNCTIONS_SECRET
+    const authToken = config.firebase.functionsSecret
     return functionsClient.post('/createCustomerUser', { ...user, authToken })
 }

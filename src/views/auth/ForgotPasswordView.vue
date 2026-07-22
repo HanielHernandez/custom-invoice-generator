@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { config } from '@/config';
 import { auth } from '@/lib/firebase';
 import { toTypedSchema } from '@vee-validate/zod';
 import { sendPasswordResetEmail } from 'firebase/auth';
@@ -21,7 +22,7 @@ const message: {
     title: '',
     description: ''
 })
-const siteUrl = import.meta.env.VITE_SITE_URL
+const siteUrl = config.siteUrl
 
 const validationSchema = toTypedSchema(z.object({
     email: z.string().email(),

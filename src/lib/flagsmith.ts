@@ -1,11 +1,10 @@
+import { config } from '@/config'
 import flagsmith from 'flagsmith'
 import type { IInitConfig } from 'flagsmith'
 
-const environmentID = import.meta.env.VITE_FLAGSMITH_ENVIRONMENT_KEY as string
-
 let initPromise: Promise<typeof flagsmith> | null = null
 
-export async function initFlagsmith(config: Omit<IInitConfig, 'environmentID'> = {}) {
+export async function initFlagsmith(initConfig: Omit<IInitConfig, 'environmentID'> = {}) {
     if (flagsmith.initialised) {
         return flagsmith
     }
@@ -13,9 +12,9 @@ export async function initFlagsmith(config: Omit<IInitConfig, 'environmentID'> =
     if (!initPromise) {
         initPromise = flagsmith
             .init({
-                environmentID,
+                environmentID: config.flagsmith.environmentKey,
                 cacheFlags: true,
-                ...config
+                ...initConfig
             })
             .then(() => flagsmith)
             .catch((error) => {
