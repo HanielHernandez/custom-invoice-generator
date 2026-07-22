@@ -17,9 +17,7 @@ const dialogOpen = ref(false)
 const editingClient = ref<Client | null>(null)
 
 const isEditing = computed(() => Boolean(editingClient.value?.id))
-const clientLimitReached = computed(() =>
-    profileStore.isUsageLimitReached('clients')
-)
+const clientLimitReached = computed(() => profileStore.isUsageLimitReached('clients'))
 
 const openCreateDialog = () => {
     if (clientLimitReached.value) {
@@ -50,7 +48,7 @@ const onFormSave = () => {
 
 <template>
     <Toaster class="pointer-events-auto" rich-colors />
-    <section class="flex flex-col gap-4">
+    <section class="flex flex-col gap-4 max-w-6xl mx-auto">
         <div class="flex items-center justify-between">
             <AtText variant="h2">Clients</AtText>
             <Button :disabled="clientLimitReached" @click="openCreateDialog">

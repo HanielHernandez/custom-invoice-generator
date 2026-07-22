@@ -1,13 +1,19 @@
 import { onRequest } from 'firebase-functions/v2/https'
 import { onDocumentCreated } from 'firebase-functions/v2/firestore'
+import { defineSecret, defineString } from 'firebase-functions/params'
 import { initializeApp, getApps } from 'firebase-admin/app'
-import { getAuth } from 'firebase-admin/auth'
-import { getFirestore } from 'firebase-admin/firestore'
+import { getAuth, type DecodedIdToken } from 'firebase-admin/auth'
+import { getFirestore, type Transaction } from 'firebase-admin/firestore'
+import Stripe from 'stripe'
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
     initializeApp()
 }
+
+const stripeApiKey = defineSecret('STRIPE_API_KEY')
+const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET')
+const appUrl = defineString('APP_URL')
 
 type UserUsage = {
     featureId: string
@@ -31,6 +37,193 @@ const buildUsage = (features: unknown): UserUsage[] => {
         }
     }
     return usage
+}
+
+const updateUsageLimits = (features: unknown, currentUsage: unknown): UserUsage[] => {
+    const planUsage = buildUsage(features)
+    const existingUsage = Array.isArray(currentUsage)
+        ? (currentUsage as UserUsage[])
+        : []
+    const limitsByFeature = new Map(
+        planUsage.map((usage) => [usage.featureId, usage.limit])
+    )
+
+    const updatedUsage = existingUsage.map((usage) => ({
+        ...usage,
+        limit: limitsByFeature.get(usage.featureId) ?? usage.limit
+    }))
+    const existingFeatureIds = new Set(
+        existingUsage.map((usage) => usage.featureId)
+    )
+
+    for (const usage of planUsage) {
+        if (!existingFeatureIds.has(usage.featureId)) {
+            updatedUsage.push(usage)
+        }
+    }
+
+    return updatedUsage
+}
+
+const stripeResourceId = (resource: string | { id: string } | null) =>
+    typeof resource === 'string' ? resource : resource?.id ?? null
+
+const updateProfilePlan = async (
+    transaction: Transaction,
+    uid: string,
+    planId: string
+) => {
+    const db = getFirestore()
+    const planRef = db.collection('plans').doc(planId)
+    const profileRef = db.collection('profiles').doc(uid)
+    const [planSnap, profileSnap] = await Promise.all([
+        transaction.get(planRef),
+        transaction.get(profileRef)
+    ])
+
+    if (!planSnap.exists) throw new Error(`Plan ${planId} was not found.`)
+    if (!profileSnap.exists) throw new Error(`Profile ${uid} was not found.`)
+
+    transaction.update(profileRef, {
+        planId: planSnap.id,
+        usage: updateUsageLimits(
+            planSnap.data()?.features,
+            profileSnap.data()?.usage
+        ),
+        updatedAt: Date.now()
+    })
+}
+
+const processStripeEventOnce = async (
+    event: Stripe.Event,
+    handler: (transaction: Transaction) => Promise<void>
+) => {
+    const db = getFirestore()
+    const eventRef = db.collection('_stripeEvents').doc(event.id)
+
+    await db.runTransaction(async (transaction) => {
+        const eventSnap = await transaction.get(eventRef)
+        if (eventSnap.exists) return
+
+        await handler(transaction)
+        transaction.create(eventRef, {
+            type: event.type,
+            createdAt: Date.now()
+        })
+    })
+}
+
+const resolveStripeCustomerUid = async (
+    transaction: Transaction,
+    customer: string | Stripe.Customer | Stripe.DeletedCustomer | null
+) => {
+    const customerId = stripeResourceId(customer)
+    if (!customerId) return null
+
+    const customerSnap = await transaction.get(
+        getFirestore().collection('stripe_customers').doc(customerId)
+    )
+    const uid = customerSnap.data()?.uid
+    return typeof uid === 'string' && uid ? uid : null
+}
+
+const handleCheckoutCompleted = async (
+    event: Stripe.Event,
+    session: Stripe.Checkout.Session
+) => {
+    const uid = session.metadata?.uid
+    const planId = session.metadata?.planId
+    if (!uid || !planId) {
+        throw new Error(`Checkout session ${session.id} is missing uid or planId metadata.`)
+    }
+
+    await processStripeEventOnce(event, async (transaction) => {
+        await updateProfilePlan(transaction, uid, planId)
+
+        const db = getFirestore()
+        const customerId = stripeResourceId(session.customer)
+        const subscriptionId = stripeResourceId(session.subscription)
+
+        if (customerId) {
+            transaction.set(db.collection('stripe_customers').doc(customerId), {
+                uid,
+                updatedAt: Date.now()
+            })
+        }
+
+        if (subscriptionId) {
+            transaction.set(db.collection('stripe_subscriptions').doc(subscriptionId), {
+                uid,
+                planId,
+                customerId,
+                status: 'active',
+                updatedAt: Date.now()
+            })
+        }
+    })
+}
+
+const handleSubscriptionInvoice = async (
+    event: Stripe.Event,
+    invoice: Stripe.Invoice,
+    status: 'paid' | 'payment_failed'
+) => {
+    await processStripeEventOnce(event, async (transaction) => {
+        const subscriptionDetails = invoice.parent?.subscription_details
+        const uid =
+            invoice.metadata?.uid ??
+            subscriptionDetails?.metadata?.uid ??
+            (await resolveStripeCustomerUid(transaction, invoice.customer))
+
+        if (!uid) {
+            throw new Error(`Unable to resolve a profile for Stripe invoice ${invoice.id}.`)
+        }
+
+        transaction.set(
+            getFirestore().collection('subscription_invoices').doc(invoice.id),
+            {
+                uid,
+                stripeInvoiceId: invoice.id,
+                customerId: stripeResourceId(invoice.customer),
+                subscriptionId: stripeResourceId(subscriptionDetails?.subscription ?? null),
+                status,
+                amountDue: invoice.amount_due,
+                amountPaid: invoice.amount_paid,
+                currency: invoice.currency,
+                hostedInvoiceUrl: invoice.hosted_invoice_url,
+                invoicePdf: invoice.invoice_pdf,
+                invoiceCreatedAt: invoice.created * 1000,
+                updatedAt: Date.now()
+            },
+            { merge: true }
+        )
+    })
+}
+
+const handleSubscriptionDeleted = async (
+    event: Stripe.Event,
+    subscription: Stripe.Subscription
+) => {
+    await processStripeEventOnce(event, async (transaction) => {
+        const uid =
+            subscription.metadata.uid ??
+            (await resolveStripeCustomerUid(transaction, subscription.customer))
+
+        if (!uid) {
+            throw new Error(`Unable to resolve a profile for subscription ${subscription.id}.`)
+        }
+
+        await updateProfilePlan(transaction, uid, 'free')
+        transaction.set(
+            getFirestore().collection('stripe_subscriptions').doc(subscription.id),
+            {
+                uid,
+                status: 'deleted',
+                deletedAt: Date.now()
+            },
+            { merge: true }
+        )
+    })
 }
 
 type UsageSource = {
@@ -143,6 +336,177 @@ export const trackClientUsage = onDocumentCreated('clients/{clientId}', async (e
 
     await incrementFeatureUsage(clientSnap.data() as UsageSource, 'clients', event.id)
 })
+
+export const createStripeCheckoutSession = onRequest(
+    { cors: true, secrets: [stripeApiKey] },
+    async (req, res) => {
+        if (req.method !== 'POST') {
+            res.status(405).send('Method Not Allowed')
+            return
+        }
+
+        const authorization = req.headers.authorization
+        if (!authorization?.startsWith('Bearer ')) {
+            res.status(401).json({ error: 'Missing Firebase ID token.' })
+            return
+        }
+
+        let decodedToken: DecodedIdToken
+        try {
+            decodedToken = await getAuth().verifyIdToken(authorization.slice(7))
+        } catch (error) {
+            console.error('Invalid Firebase ID token:', error)
+            res.status(401).json({ error: 'Invalid Firebase ID token.' })
+            return
+        }
+
+        const { planId, userProfile } = req.body as {
+            planId?: unknown
+            userProfile?: { uid?: unknown; email?: unknown }
+        }
+
+        if (typeof planId !== 'string' || !planId.trim()) {
+            res.status(400).json({ error: 'A valid planId is required.' })
+            return
+        }
+
+        if (
+            !userProfile ||
+            typeof userProfile.uid !== 'string' ||
+            userProfile.uid !== decodedToken.uid
+        ) {
+            res.status(403).json({ error: 'The submitted profile does not match the current user.' })
+            return
+        }
+
+        try {
+            const db = getFirestore()
+            const [planSnap, profileSnap] = await Promise.all([
+                db.collection('plans').doc(planId.trim()).get(),
+                db.collection('profiles').doc(decodedToken.uid).get()
+            ])
+
+            if (!planSnap.exists) {
+                res.status(404).json({ error: 'Plan not found.' })
+                return
+            }
+
+            if (!profileSnap.exists) {
+                res.status(404).json({ error: 'User profile not found.' })
+                return
+            }
+
+            const plan = planSnap.data()
+            const profile = profileSnap.data()
+            const stripePriceId = plan?.stripePriceId
+            const customerEmail = profile?.email ?? decodedToken.email
+
+            if (plan?.isFree || typeof stripePriceId !== 'string' || !stripePriceId) {
+                res.status(400).json({ error: 'This plan cannot be purchased.' })
+                return
+            }
+
+            if (typeof customerEmail !== 'string' || !customerEmail) {
+                res.status(400).json({ error: 'The user profile does not have an email address.' })
+                return
+            }
+
+            const checkoutAppUrl = appUrl.value().replace(/\/+$/, '')
+            if (!checkoutAppUrl) {
+                console.error('APP_URL is not configured.')
+                res.status(500).json({ error: 'Checkout is not configured.' })
+                return
+            }
+
+            const stripe = new Stripe(stripeApiKey.value())
+            const session = await stripe.checkout.sessions.create({
+                mode: 'subscription',
+                customer_email: customerEmail,
+                line_items: [
+                    {
+                        price: stripePriceId,
+                        quantity: 1
+                    }
+                ],
+                success_url: `${checkoutAppUrl}/dashboard/billing?checkout=success`,
+                cancel_url: `${checkoutAppUrl}/dashboard/billing?checkout=cancelled`,
+                metadata: {
+                    uid: decodedToken.uid,
+                    planId: planSnap.id
+                },
+                subscription_data: {
+                    metadata: {
+                        uid: decodedToken.uid,
+                        planId: planSnap.id
+                    }
+                }
+            })
+
+            if (!session.url) {
+                throw new Error(`Stripe session ${session.id} did not return a checkout URL.`)
+            }
+
+            res.status(201).json({ url: session.url })
+        } catch (error) {
+            console.error('Error creating Stripe Checkout session:', error)
+            res.status(500).json({ error: 'Unable to create checkout session.' })
+        }
+    }
+)
+
+export const stripeWebhook = onRequest(
+    { cors: false, secrets: [stripeApiKey, stripeWebhookSecret] },
+    async (req, res) => {
+        if (req.method !== 'POST') {
+            res.status(405).send('Method Not Allowed')
+            return
+        }
+
+        const signature = req.headers['stripe-signature']
+        if (typeof signature !== 'string') {
+            res.status(400).send('Missing Stripe signature.')
+            return
+        }
+
+        let event: Stripe.Event
+        try {
+            const stripe = new Stripe(stripeApiKey.value())
+            event = stripe.webhooks.constructEvent(
+                req.rawBody,
+                signature,
+                stripeWebhookSecret.value()
+            )
+        } catch (error) {
+            console.error('Stripe webhook signature verification failed:', error)
+            res.status(400).send('Invalid Stripe signature.')
+            return
+        }
+
+        try {
+            switch (event.type) {
+                case 'checkout.session.completed':
+                    await handleCheckoutCompleted(event, event.data.object)
+                    break
+                case 'invoice.paid':
+                    await handleSubscriptionInvoice(event, event.data.object, 'paid')
+                    break
+                case 'invoice.payment_failed':
+                    await handleSubscriptionInvoice(event, event.data.object, 'payment_failed')
+                    break
+                case 'customer.subscription.deleted':
+                    await handleSubscriptionDeleted(event, event.data.object)
+                    break
+                default:
+                    console.log(`Unhandled Stripe event type: ${event.type}`)
+            }
+
+            res.status(200).json({ received: true })
+        } catch (error) {
+            console.error(`Failed to process Stripe event ${event.id}:`, error)
+            res.status(500).json({ error: 'Unable to process Stripe webhook.' })
+        }
+    }
+)
 
 // HTTP Function (v2)
 export const createAdminUser = onRequest(async (req, res) => {

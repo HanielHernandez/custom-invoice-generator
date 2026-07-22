@@ -1,23 +1,31 @@
 <script setup lang="ts">
 import AtText from '@/components/atoms/AtText.vue'
+import SubscriptionInvoices from '@/components/SubscriptionInvoices.vue'
+import UpgradePlanDialog from '@/components/UpgradePlanDialog.vue'
 import Button from '@/components/ui/button/Button.vue'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import { usePlansStore } from '@/stores/plansStore'
 import { useProfileStore } from '@/stores/profileStore'
 import type { Plan } from '@/types/plan'
+import { CircleCheckBigIcon } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const profileStore = useProfileStore()
 const plansStore = usePlansStore()
+const route = useRoute()
+const router = useRouter()
 const { profile } = storeToRefs(profileStore)
 
 const currentPlan = ref<Plan | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
+const upgradeDialogOpen = ref(false)
 
 const planId = computed(() => profile.value?.planId?.trim() ?? '')
+const checkoutSucceeded = computed(() => route.query.checkout === 'success')
 
 const formatPrice = (plan: Plan) => {
     if (plan.isFree) return 'Free'
@@ -36,6 +44,14 @@ const usage = computed(() => profile.value?.usage ?? [])
 const usagePercentage = (used: number, limit: number) => {
     if (limit <= 0) return 0
     return Math.min(100, Math.max(0, (used / limit) * 100))
+}
+
+const openUpgradeDialog = () => {
+    upgradeDialogOpen.value = true
+}
+
+const showBillingDetails = () => {
+    router.replace({ name: 'billing' })
 }
 
 onMounted(async () => {
@@ -71,7 +87,26 @@ const currentPlanPrice = computed(() => {
             <AtText variant="p">Review your current subscription and included features.</AtText>
         </div>
 
-        <Card v-if="loading">
+        <Card v-if="checkoutSucceeded" class="border-green-200 bg-green-50">
+            <CardContent class="flex flex-col items-center gap-5 py-12 text-center">
+                <span
+                    class="flex size-16 items-center justify-center rounded-full bg-green-100 text-green-700"
+                >
+                    <CircleCheckBigIcon class="size-9" />
+                </span>
+                <div class="max-w-xl space-y-2">
+                    <CardTitle class="text-2xl">Congratulations!</CardTitle>
+                    <CardDescription class="text-base text-green-900/70">
+                        Your subscription has been upgraded successfully. Your new plan and usage
+                        limits may take a few minutes to appear while we finish processing your
+                        payment.
+                    </CardDescription>
+                </div>
+                <Button @click="showBillingDetails">View billing details</Button>
+            </CardContent>
+        </Card>
+
+        <Card v-else-if="loading">
             <CardContent class="flex min-h-48 items-center justify-center">
                 <LoadingSpinner />
             </CardContent>
@@ -96,12 +131,20 @@ const currentPlanPrice = computed(() => {
 
         <div v-else-if="currentPlan" class="flex flex-col gap-4">
             <Card>
-                <CardContent class="flex w-full flex-row justify-between items-center">
-                    <div>
+                <CardContent
+                    class="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                    <div class="space-y-1">
                         <CardTitle>{{ currentPlan.name }}</CardTitle>
-                        <CardDescription>{{ currentPlanPrice }}</CardDescription>
+                        <CardDescription>
+                            {{
+                                currentPlan.description ||
+                                'Your current subscription plan.'
+                            }}
+                        </CardDescription>
+                        <p class="font-medium">{{ currentPlanPrice }}</p>
                     </div>
-                    <Button>Upgrade Plan</Button>
+                    <Button @click="openUpgradeDialog">Upgrade Plan</Button>
                 </CardContent>
             </Card>
 
@@ -162,6 +205,13 @@ const currentPlanPrice = computed(() => {
                     </p>
                 </CardContent>
             </Card>
+
+            <SubscriptionInvoices />
         </div>
+
+        <UpgradePlanDialog
+            v-model:open="upgradeDialogOpen"
+            :current-plan-id="planId"
+        />
     </div>
 </template>
