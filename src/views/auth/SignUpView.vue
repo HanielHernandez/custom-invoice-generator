@@ -66,6 +66,9 @@ const onSubmit = handleSubmit(async ({ name, email, password }) => {
             photoUrl,
             role: 'editor',
             planId,
+            flags: {
+                onboardingComplete: false
+            },
             createdAt: now,
             veifiedAt: ''
         }

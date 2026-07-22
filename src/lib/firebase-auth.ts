@@ -2,6 +2,10 @@ import axios from 'axios'
 
 export type PlanId = 'free' | 'monthly'
 
+export type UserProfileFlags = {
+    onboardingComplete?: boolean
+}
+
 export type User = {
     email: string | null
     password?: string
@@ -16,6 +20,7 @@ export type UserProfile = User & {
     role: string
     uid: string
     planId: PlanId
+    flags?: UserProfileFlags
 }
 
 const FUNCTIONS_URL = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL
@@ -30,25 +35,3 @@ export const createUser = (user: User) => {
     const authToken = FUNCTIONS_SECRET
     return functionsClient.post('/createCustomerUser', { ...user, authToken })
 }
-
-// type GetUsersOptions = {
-//     max?: number
-//     page?: number
-//     orderByProp?: string
-//     flow?: 'asc' | 'desc'
-//     lastItem?: QueryDocumentSnapshot
-// }
-
-// type GetUserResponse<T> = {
-//     items: T[]
-//     lastItem: QueryDocumentSnapshot
-// }
-
-// export const getUsers = async ({
-//     max = 10,
-//     orderByProp = 'createdAt',
-//     flow = 'desc',
-//     lastItem
-// }: GetUsersOptions): Promise<GetUserResponse<UserProfile>> => {
-//     return { items, lastItem: lastItemInArray }
-// }

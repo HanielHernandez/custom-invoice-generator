@@ -9,6 +9,8 @@ const isRole = (value: unknown): value is Role =>
 
 export function useRole() {
     const role = ref<Role | null>(null)
+    /** Custom claim role only (no profile fallback). */
+    const claimRole = ref<Role | null>(null)
     const loading = ref(true)
 
     onMounted(async () => {
@@ -20,10 +22,11 @@ export function useRole() {
 
         try {
             const tokenResult = await user.getIdTokenResult()
-            const claimRole = tokenResult.claims.role
+            const tokenClaimRole = tokenResult.claims.role
 
-            if (isRole(claimRole) && claimRole !== 'any') {
-                role.value = claimRole
+            if (isRole(tokenClaimRole) && tokenClaimRole !== 'any') {
+                claimRole.value = tokenClaimRole
+                role.value = tokenClaimRole
                 return
             }
 
@@ -48,6 +51,7 @@ export function useRole() {
 
     return {
         role,
+        claimRole,
         loading
     }
 }

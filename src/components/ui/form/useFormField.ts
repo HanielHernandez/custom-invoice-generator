@@ -1,5 +1,5 @@
 import { FieldContextKey, useFieldError, useIsFieldDirty, useIsFieldTouched, useIsFieldValid } from 'vee-validate'
-import { inject } from 'vue'
+import { computed, inject } from 'vue'
 import { FORM_ITEM_INJECTION_KEY } from './injectionKeys'
 
 export function useFormField() {
@@ -12,12 +12,15 @@ export function useFormField() {
   const { name } = fieldContext
   const id = fieldItemContext
 
-  const fieldState = {
-    valid: useIsFieldValid(name),
-    isDirty: useIsFieldDirty(name),
-    isTouched: useIsFieldTouched(name),
-    error: useFieldError(name),
-  }
+  const valid = useIsFieldValid(name)
+  const isDirty = useIsFieldDirty(name)
+  const isTouched = useIsFieldTouched(name)
+  const error = useFieldError(name)
+
+  // Only surface errors after interaction / step validation marks the field touched.
+  const visibleError = computed(() =>
+    isTouched.value || isDirty.value ? error.value : undefined
+  )
 
   return {
     id,
@@ -25,6 +28,9 @@ export function useFormField() {
     formItemId: `${id}-form-item`,
     formDescriptionId: `${id}-form-item-description`,
     formMessageId: `${id}-form-item-message`,
-    ...fieldState,
+    valid,
+    isDirty,
+    isTouched,
+    error: visibleError,
   }
 }

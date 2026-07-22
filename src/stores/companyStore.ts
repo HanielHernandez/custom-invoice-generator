@@ -23,12 +23,14 @@ export const useCompanyStore = defineStore('company', () => {
 
             if (snap.empty) {
                 console.warn('No company found for user:', user.uid)
-                return
+                company.value = null
+                return null
             }
 
             const docSnap = snap.docs[0] // assume only one company per user
 
             company.value = { ...(docSnap.data() as Company), id: docSnap.id }
+            return company.value
         } catch (e) {
             console.error(e)
         } finally {

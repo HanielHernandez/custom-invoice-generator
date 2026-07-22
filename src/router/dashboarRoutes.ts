@@ -76,5 +76,37 @@ export const dashboardRoutes = [
             requiresAuth: true,
             requiresClientsFlag: true
         }
+    },
+    {
+        path: 'plans',
+        name: 'plans',
+        component: () => import('../views/dashboard/PlansView.vue'),
+        meta: {
+            requiresAuth: true,
+            requiresRole: 'admin',
+            requiresPlansFlag: true
+        },
+        children: [
+            {
+                path: '',
+                name: 'plans-list',
+                component: () => import('../views/dashboard/plans/PlansListView.vue'),
+                meta: {
+                    requiresAuth: true,
+                    requiresRole: 'admin',
+                    requiresPlansFlag: true
+                }
+            },
+            {
+                path: 'new',
+                name: 'plans-new',
+                component: () => import('../views/dashboard/plans/CreatePlanView.vue'),
+                meta: {
+                    requiresAuth: true,
+                    requiresRole: 'admin',
+                    requiresPlansFlag: true
+                }
+            }
+        ]
     }
 ]

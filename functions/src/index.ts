@@ -124,6 +124,9 @@ export const createCustomerUser = onRequest(async (req, res: any) => {
                 photoUrl,
                 role: 'editor',
                 planId: 'free',
+                flags: {
+                    onboardingComplete: false
+                },
                 createdAt: Date.now(),
                 veifiedAt: ''
             })

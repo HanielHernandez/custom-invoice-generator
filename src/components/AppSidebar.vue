@@ -14,6 +14,7 @@ import {
 import {
     ChevronsUpDown,
     ContactIcon,
+    CreditCardIcon,
     HomeIcon,
     LogOut,
     ScrollTextIcon,
@@ -42,15 +43,19 @@ type MenuItem = {
     icon: unknown
     role: Role
     requiresClientsFlag?: boolean
+    requiresPlansFlag?: boolean
+    /** When set, only show if Auth custom claim matches (no profile fallback). */
+    requiresClaimRole?: Role
 }
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
 const router = useRouter()
-const { clients, getFlagsmith } = useFlagsmith()
+const { clients, plans, getFlagsmith } = useFlagsmith()
 
 getFlagsmith()
 
 const showClients = computed(() => clients.value)
+const showPlans = computed(() => plans.value)
 
 const menuItems: MenuItem[] = [
     {
@@ -73,6 +78,14 @@ const menuItems: MenuItem[] = [
         requiresClientsFlag: true
     },
     {
+        name: 'Plans',
+        icon: CreditCardIcon,
+        url: '/dashboard/plans',
+        role: 'admin',
+        requiresPlansFlag: true,
+        requiresClaimRole: 'admin'
+    },
+    {
         name: 'Company',
         icon: StoreIcon,
         url: '/dashboard/company',
@@ -80,12 +93,14 @@ const menuItems: MenuItem[] = [
     }
 ]
 
-const { role } = useRole()
+const { role, claimRole } = useRole()
 
 const availableItems = computed(() => {
     if (role == null) return []
     return menuItems.filter((x) => {
         if (x.requiresClientsFlag && !showClients.value) return false
+        if (x.requiresPlansFlag && !showPlans.value) return false
+        if (x.requiresClaimRole && claimRole.value !== x.requiresClaimRole) return false
         return x.role == 'any' ? true : x.role == role.value
     })
 })

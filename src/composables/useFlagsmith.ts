@@ -5,9 +5,13 @@ const isReady = ref(false)
 const isIdentified = ref(false)
 const error = ref<Error | null>(null)
 const clients = ref(false)
+const plans = ref(false)
+const onboarding = ref(false)
 
-const syncClientsFlag = () => {
+const syncFlags = () => {
     clients.value = flagsmith.hasFeature('clients')
+    plans.value = flagsmith.hasFeature('plans')
+    onboarding.value = flagsmith.hasFeature('onboarding')
 }
 
 export function useFlagsmith() {
@@ -15,10 +19,10 @@ export function useFlagsmith() {
         try {
             await initFlagsmith({
                 onChange: () => {
-                    syncClientsFlag()
+                    syncFlags()
                 }
             })
-            syncClientsFlag()
+            syncFlags()
             isReady.value = true
             error.value = null
             return flagsmith
@@ -32,13 +36,15 @@ export function useFlagsmith() {
         const client = await getFlagsmith()
         await client.identify(email)
         isIdentified.value = true
-        syncClientsFlag()
+        syncFlags()
         return client
     }
 
     return {
         flagsmith,
         clients,
+        plans,
+        onboarding,
         isReady,
         isIdentified,
         error,

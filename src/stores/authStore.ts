@@ -3,6 +3,7 @@ import type { User as FirebaseUser } from 'firebase/auth'
 import { signOut } from 'firebase/auth'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useProfileStore } from './profileStore'
 
 export const useAuthStore = defineStore('auth', () => {
     const user = ref<FirebaseUser | null>(null)
@@ -15,6 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             await signOut(auth)
             user.value = null
+            useProfileStore().reset()
         } catch (e) {
             console.error(e)
         }

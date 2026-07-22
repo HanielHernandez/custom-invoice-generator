@@ -6,6 +6,21 @@ import type {
     RouteLocationNormalizedLoaded
 } from 'vue-router'
 
+const ensureFeatureFlag = async (
+    flag: 'clients' | 'plans',
+    currentUserEmail: string | null | undefined
+) => {
+    const { getFlagsmith, identify, clients, plans } = useFlagsmith()
+
+    await getFlagsmith()
+
+    if (currentUserEmail) {
+        await identify(currentUserEmail)
+    }
+
+    return flag === 'clients' ? clients.value : plans.value
+}
+
 export const requiresAuthGuard = async (
     to: RouteLocationNormalized,
     _: RouteLocationNormalizedLoaded,
@@ -15,6 +30,7 @@ export const requiresAuthGuard = async (
     const requiresAuth = to.meta.requiresAuth || false
     const requiredRole = to.meta.requiresRole || false
     const requiresClientsFlag = to.meta.requiresClientsFlag || false
+    const requiresPlansFlag = to.meta.requiresPlansFlag || false
 
     console.log(to.fullPath, requiresAuth, currentUser)
 
@@ -24,20 +40,25 @@ export const requiresAuthGuard = async (
     }
 
     if (requiresClientsFlag) {
-        const { getFlagsmith, identify, clients } = useFlagsmith()
-
         try {
-            await getFlagsmith()
-
-            if (currentUser?.email) {
-                await identify(currentUser.email)
-            }
-
-            if (!clients.value) {
+            const enabled = await ensureFeatureFlag('clients', currentUser?.email)
+            if (!enabled) {
                 return next({ name: 'invoices' })
             }
         } catch (error) {
             console.error('Error checking clients flag:', error)
+            return next({ name: 'invoices' })
+        }
+    }
+
+    if (requiresPlansFlag) {
+        try {
+            const enabled = await ensureFeatureFlag('plans', currentUser?.email)
+            if (!enabled) {
+                return next({ name: 'invoices' })
+            }
+        } catch (error) {
+            console.error('Error checking plans flag:', error)
             return next({ name: 'invoices' })
         }
     }
@@ -50,7 +71,7 @@ export const requiresAuthGuard = async (
         const tokenResult = await currentUser?.getIdTokenResult(true)
         const userRole = tokenResult?.claims?.role
 
-        // ✅ If role matches
+        // ✅ If custom claim role matches
         if (userRole === requiredRole) {
             return next()
         } else {
