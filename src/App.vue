@@ -15,6 +15,11 @@ onMounted(async () => {
     }
 
     await getFlagsmith()
+
+    console.log({
+  VERCEL_ENV: import.meta.env.VERCEL_ENV,
+  VERCEL_GIT_COMMIT_REF: import.meta.env.VERCEL_GIT_COMMIT_REF,
+});
 })
 </script>
 
