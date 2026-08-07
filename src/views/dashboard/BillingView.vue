@@ -54,17 +54,20 @@ const showBillingDetails = () => {
     router.replace({ name: 'billing' })
 }
 
-onMounted(async () => {
+const loadBilling = async () => {
+    loading.value = true
+    error.value = null
+
     try {
-        if (!profileStore.loaded) {
-            await profileStore.fetchProfile()
-        }
+        await profileStore.fetchProfile(true)
 
         if (planId.value) {
             currentPlan.value = await plansStore.fetchById(planId.value)
             if (!currentPlan.value) {
                 error.value = `The plan "${planId.value}" could not be found.`
             }
+        } else {
+            currentPlan.value = null
         }
     } catch (e) {
         console.error('Error loading billing plan:', e)
@@ -72,7 +75,9 @@ onMounted(async () => {
     } finally {
         loading.value = false
     }
-})
+}
+
+onMounted(loadBilling)
 
 const currentPlanPrice = computed(() => {
     if (!currentPlan.value) return '$0.00'
@@ -212,6 +217,7 @@ const currentPlanPrice = computed(() => {
         <UpgradePlanDialog
             v-model:open="upgradeDialogOpen"
             :current-plan-id="planId"
+            @upgraded="loadBilling"
         />
     </div>
 </template>

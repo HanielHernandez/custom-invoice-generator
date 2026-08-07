@@ -17,6 +17,7 @@ import type { Plan, PlanInterval } from '@/types/plan'
 import { CheckIcon } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
 const props = defineProps<{
     open: boolean
@@ -25,8 +26,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (event: 'update:open', open: boolean): void
+    (event: 'upgraded', planId: string): void
 }>()
 
+const router = useRouter()
 const plansStore = usePlansStore()
 const profileStore = useProfileStore()
 const { items: plans, loading: plansLoading, error: plansError } = storeToRefs(plansStore)
@@ -36,12 +39,19 @@ const selectedInterval = ref<PlanInterval>('monthly')
 const checkoutPlanId = ref<string | null>(null)
 const checkoutError = ref<string | null>(null)
 
-const getCheckoutSessionUrl = () => {
+const getFunctionsUrl = (path: string) => {
     if (!config.firebase.functionsUrl) {
         throw new Error('VITE_FIREBASE_FUNCTIONS_URL is not configured.')
     }
-    return `${config.firebase.functionsUrl}/createStripeCheckoutSession`
+    return `${config.firebase.functionsUrl}/${path}`
 }
+
+const currentPlan = computed(
+    () => plans.value.find((plan) => plan.id === props.currentPlanId) ?? null
+)
+const hasPaidSubscription = computed(
+    () => Boolean(currentPlan.value && !currentPlan.value.isFree)
+)
 
 const filteredPlans = computed(() =>
     plans.value.filter((plan) => plan.interval === selectedInterval.value)
@@ -59,53 +69,92 @@ const formatPrice = (plan: Plan) => {
 const formatFeatureName = (id: string) =>
     id.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
 
-const startCheckout = async (plan: Plan) => {
+const requireSignedInUser = async () => {
+    const user = auth.currentUser
+    if (!user) throw new Error('You must be signed in to upgrade your plan.')
+
+    if (!profile.value) {
+        await profileStore.fetchProfile()
+    }
+    if (!profile.value) throw new Error('Your user profile could not be loaded.')
+
+    return user
+}
+
+const startCheckout = async (plan: Plan, idToken: string) => {
+    if (!config.siteUrl) {
+        throw new Error('VITE_SITE_URL is not configured.')
+    }
+
+    const response = await fetch(getFunctionsUrl('createStripeCheckoutSession'), {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${idToken}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            planId: plan.id,
+            userProfile: profile.value,
+            successUrl: `${config.siteUrl}/dashboard/billing?checkout=success`,
+            failureUrl: `${config.siteUrl}/dashboard/billing?checkout=cancelled`
+        })
+    })
+
+    const result = (await response.json()) as { url?: unknown; error?: unknown }
+    if (!response.ok) {
+        throw new Error(
+            typeof result.error === 'string'
+                ? result.error
+                : 'Unable to create a checkout session.'
+        )
+    }
+    if (typeof result.url !== 'string' || !result.url) {
+        throw new Error('The checkout session did not return a redirect URL.')
+    }
+
+    window.location.assign(result.url)
+}
+
+const changeSubscription = async (plan: Plan, idToken: string) => {
+    const response = await fetch(getFunctionsUrl('changeStripeSubscriptionPlan'), {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${idToken}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ planId: plan.id })
+    })
+
+    const result = (await response.json()) as { success?: unknown; planId?: unknown; error?: unknown }
+    if (!response.ok) {
+        throw new Error(
+            typeof result.error === 'string'
+                ? result.error
+                : 'Unable to change your subscription plan.'
+        )
+    }
+
+    await profileStore.fetchProfile(true)
+    emit('update:open', false)
+    await router.replace({ name: 'billing', query: { checkout: 'success' } })
+    emit('upgraded', plan.id)
+}
+
+const startUpgrade = async (plan: Plan) => {
     if (plan.isFree || plan.id === props.currentPlanId) return
 
     checkoutError.value = null
     checkoutPlanId.value = plan.id
 
     try {
-        const user = auth.currentUser
-        if (!user) throw new Error('You must be signed in to upgrade your plan.')
-
-        if (!profile.value) {
-            await profileStore.fetchProfile()
-        }
-        if (!profile.value) throw new Error('Your user profile could not be loaded.')
-
-        if (!config.siteUrl) {
-            throw new Error('VITE_SITE_URL is not configured.')
-        }
-
+        const user = await requireSignedInUser()
         const idToken = await user.getIdToken()
-        const response = await fetch(getCheckoutSessionUrl(), {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${idToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                planId: plan.id,
-                userProfile: profile.value,
-                successUrl: `${config.siteUrl}/dashboard/billing?checkout=success`,
-                failureUrl: `${config.siteUrl}/dashboard/billing?checkout=cancelled`
-            })
-        })
 
-        const result = (await response.json()) as { url?: unknown; error?: unknown }
-        if (!response.ok) {
-            throw new Error(
-                typeof result.error === 'string'
-                    ? result.error
-                    : 'Unable to create a checkout session.'
-            )
+        if (hasPaidSubscription.value) {
+            await changeSubscription(plan, idToken)
+        } else {
+            await startCheckout(plan, idToken)
         }
-        if (typeof result.url !== 'string' || !result.url) {
-            throw new Error('The checkout session did not return a redirect URL.')
-        }
-
-        window.location.assign(result.url)
     } catch (error) {
         checkoutError.value = error instanceof Error ? error.message : String(error)
     } finally {
@@ -119,8 +168,8 @@ watch(
         if (!open) return
 
         checkoutError.value = null
-        const currentPlan = plans.value.find((plan) => plan.id === props.currentPlanId)
-        selectedInterval.value = currentPlan?.interval ?? 'monthly'
+        const openCurrentPlan = plans.value.find((plan) => plan.id === props.currentPlanId)
+        selectedInterval.value = openCurrentPlan?.interval ?? 'monthly'
         await plansStore.fetch()
 
         const loadedCurrentPlan = plans.value.find((plan) => plan.id === props.currentPlanId)
@@ -238,7 +287,7 @@ watch(
                                 plan.isFree ||
                                 checkoutPlanId !== null
                             "
-                            @click="startCheckout(plan)"
+                            @click="startUpgrade(plan)"
                         >
                             <LoadingSpinner v-if="checkoutPlanId === plan.id" />
                             <template v-if="checkoutPlanId === plan.id">Upgrading...</template>

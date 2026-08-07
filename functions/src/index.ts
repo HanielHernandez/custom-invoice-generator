@@ -209,6 +209,40 @@ const handleSubscriptionInvoice = async (
     })
 }
 
+const handleSubscriptionUpdated = async (
+    event: Stripe.Event,
+    subscription: Stripe.Subscription
+) => {
+    const planId = subscription.metadata.planId
+    if (!planId) {
+        console.log(`Subscription ${subscription.id} update skipped: missing planId metadata.`)
+        return
+    }
+
+    await processStripeEventOnce(event, async (transaction) => {
+        const uid =
+            subscription.metadata.uid ??
+            (await resolveStripeCustomerUid(transaction, subscription.customer))
+
+        if (!uid) {
+            throw new Error(`Unable to resolve a profile for subscription ${subscription.id}.`)
+        }
+
+        await updateProfilePlan(transaction, uid, planId)
+        transaction.set(
+            getFirestore().collection('stripe_subscriptions').doc(subscription.id),
+            {
+                uid,
+                planId,
+                customerId: stripeResourceId(subscription.customer),
+                status: subscription.status,
+                updatedAt: Date.now()
+            },
+            { merge: true }
+        )
+    })
+}
+
 const handleSubscriptionDeleted = async (
     event: Stripe.Event,
     subscription: Stripe.Subscription
@@ -233,6 +267,20 @@ const handleSubscriptionDeleted = async (
             { merge: true }
         )
     })
+}
+
+const findActiveStripeSubscription = async (uid: string) => {
+    const snap = await getFirestore()
+        .collection('stripe_subscriptions')
+        .where('uid', '==', uid)
+        .get()
+
+    return (
+        snap.docs.find((docSnap) => {
+            const status = docSnap.data()?.status
+            return status === 'active' || status === 'trialing' || status === 'past_due'
+        }) ?? null
+    )
 }
 
 type UsageSource = {
@@ -463,6 +511,120 @@ export const createStripeCheckoutSession = onRequest(
     }
 )
 
+export const changeStripeSubscriptionPlan = onRequest(
+    { cors: true, secrets: [stripeApiKey] },
+    async (req, res) => {
+        if (req.method !== 'POST') {
+            res.status(405).send('Method Not Allowed')
+            return
+        }
+
+        const authorization = req.headers.authorization
+        if (!authorization?.startsWith('Bearer ')) {
+            res.status(401).json({ error: 'Missing Firebase ID token.' })
+            return
+        }
+
+        let decodedToken: DecodedIdToken
+        try {
+            decodedToken = await getAuth().verifyIdToken(authorization.slice(7))
+        } catch (error) {
+            console.error('Invalid Firebase ID token:', error)
+            res.status(401).json({ error: 'Invalid Firebase ID token.' })
+            return
+        }
+
+        const { planId } = req.body as { planId?: unknown }
+
+        if (typeof planId !== 'string' || !planId.trim()) {
+            res.status(400).json({ error: 'A valid planId is required.' })
+            return
+        }
+
+        try {
+            const db = getFirestore()
+            const [planSnap, profileSnap, subscriptionDoc] = await Promise.all([
+                db.collection('plans').doc(planId.trim()).get(),
+                db.collection('profiles').doc(decodedToken.uid).get(),
+                findActiveStripeSubscription(decodedToken.uid)
+            ])
+
+            if (!planSnap.exists) {
+                res.status(404).json({ error: 'Plan not found.' })
+                return
+            }
+
+            if (!profileSnap.exists) {
+                res.status(404).json({ error: 'User profile not found.' })
+                return
+            }
+
+            if (!subscriptionDoc) {
+                res.status(400).json({
+                    error: 'No active paid subscription found. Start a checkout session instead.'
+                })
+                return
+            }
+
+            const plan = planSnap.data()
+            const stripePriceId = plan?.stripePriceId
+
+            if (plan?.isFree || typeof stripePriceId !== 'string' || !stripePriceId) {
+                res.status(400).json({ error: 'This plan cannot be purchased.' })
+                return
+            }
+
+            if (profileSnap.data()?.planId === planSnap.id) {
+                res.status(400).json({ error: 'You are already on this plan.' })
+                return
+            }
+
+            const stripe = new Stripe(stripeApiKey.value())
+            const subscription = await stripe.subscriptions.retrieve(subscriptionDoc.id)
+            const subscriptionItemId = subscription.items.data[0]?.id
+
+            if (!subscriptionItemId) {
+                res.status(400).json({ error: 'The Stripe subscription has no billable items.' })
+                return
+            }
+
+            await stripe.subscriptions.update(subscription.id, {
+                items: [
+                    {
+                        id: subscriptionItemId,
+                        price: stripePriceId
+                    }
+                ],
+                proration_behavior: 'create_prorations',
+                metadata: {
+                    uid: decodedToken.uid,
+                    planId: planSnap.id
+                }
+            })
+
+            await db.runTransaction(async (transaction) => {
+                await updateProfilePlan(transaction, decodedToken.uid, planSnap.id)
+                transaction.set(
+                    db.collection('stripe_subscriptions').doc(subscription.id),
+                    {
+                        uid: decodedToken.uid,
+                        planId: planSnap.id,
+                        customerId: stripeResourceId(subscription.customer),
+                        status: subscription.status,
+                        updatedAt: Date.now()
+                    },
+                    { merge: true }
+                )
+            })
+
+            res.status(200).json({ success: true, planId: planSnap.id })
+        } catch (error) {
+            console.error('Error changing Stripe subscription plan:', error)
+            res.status(500).json({ error: 'Unable to change subscription plan.' })
+        }
+    }
+)
+
 export const stripeWebhook = onRequest(
     { cors: false, secrets: [stripeApiKey, stripeWebhookSecret] },
     async (req, res) => {
@@ -501,6 +663,9 @@ export const stripeWebhook = onRequest(
                     break
                 case 'invoice.payment_failed':
                     await handleSubscriptionInvoice(event, event.data.object, 'payment_failed')
+                    break
+                case 'customer.subscription.updated':
+                    await handleSubscriptionUpdated(event, event.data.object)
                     break
                 case 'customer.subscription.deleted':
                     await handleSubscriptionDeleted(event, event.data.object)
