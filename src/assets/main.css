@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,700&family=Figtree:wght@400;500;600;700&family=Great+Vibes&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
@@ -10,6 +10,8 @@
 
 @theme inline {
     --font-great-vibes: 'Great Vibes', cursive;
+    --font-bricolage: 'Bricolage Grotesque', sans-serif;
+    --font-figtree: 'Figtree', sans-serif;
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     --color-card: var(--card);

@@ -60,7 +60,7 @@ const onFormSave = async (payloadInvocie: Invoice) => {
 </script>
 <template>
     <div class="flex flex-col gap-4 items-start w-full">
-        <Button variant="ghost" to="/" :as="RouterLink">
+        <Button variant="ghost" to="/dashboard/invoices" :as="RouterLink">
             <ArrowLeft />
             Go Back to Dashboard
         </Button>

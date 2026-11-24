@@ -36,7 +36,7 @@ export const requiresAuthGuard = async (
 
     // ⛔ Not authenticated but trying to access a protected route
     if (requiresAuth && !currentUser) {
-        return next('auth/signin') // redirect to login
+        return next({ path: '/auth/signin' })
     }
 
     if (requiresClientsFlag) {
